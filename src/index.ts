@@ -25,7 +25,9 @@ async function main(): Promise<void> {
     const skillTracker = new SkillTracker("user");
     const commandProcessor = new CommandProcessor(commandRegistry, filesystem);
     const terminal = new TerminalEmulator(commandProcessor);
-    const missionManager = new MissionManager(filesystem);
+
+    // Initialize mission manager with skill tracker for dynamic difficulty
+    const missionManager = new MissionManager(filesystem, skillTracker);
 
     // Register commands
     registerCommands(commandRegistry, missionManager, skillTracker);
@@ -95,9 +97,67 @@ async function main(): Promise<void> {
           console.log(`\n${mission.debriefing}\n`);
           missionManager.completeMission(mission.id);
           skillTracker.recordMissionCompletion(mission.id);
+
+          // Recalculate difficulty for any unlocked missions
+          if (mission.nextMissions) {
+            mission.nextMissions.forEach((nextMissionId) => {
+              if (missionManager.getMission(nextMissionId)) {
+                missionManager.calculateDifficultyModifier(nextMissionId);
+              }
+            });
+          }
         }
       });
     });
+
+    // Listen for mission events for enhanced visual feedback
+    missionManager.on("mission-started", ({ missionId, mission }) => {
+      const difficultyModifier =
+        missionManager.getDifficultyModifier(missionId);
+      let difficultyText = "";
+
+      if (difficultyModifier < 0.9) {
+        difficultyText =
+          "\n[DIFFICULTY: LOWERED] This mission has been adjusted to match your skill level.";
+      } else if (difficultyModifier > 1.1) {
+        difficultyText =
+          "\n[DIFFICULTY: INCREASED] This mission has been adjusted to challenge your skills.";
+      }
+
+      console.log(`\n== MISSION ACTIVATED: ${mission.title} ==`);
+      console.log(
+        `Difficulty: ${"★".repeat(Math.round(mission.difficulty))}${"☆".repeat(
+          5 - Math.round(mission.difficulty)
+        )}`
+      );
+      console.log(
+        `Estimated Time: ${mission.estimatedTime} minutes${difficultyText}\n`
+      );
+    });
+
+    missionManager.on("mission-completed", ({ missionId, mission }) => {
+      console.log(`\n== MISSION COMPLETE: ${mission.title} ==`);
+      console.log("[ SKILL PROGRESS UPDATED ]\n");
+
+      const profile = skillTracker.getSkillProfile();
+      console.log(
+        `Current Level: ${getSkillLevelName(profile.overallLevel)}\n`
+      );
+    });
+
+    missionManager.on(
+      "mission-requirements-not-met",
+      ({ missionId, mission, requiredLevel, userLevel }) => {
+        console.log(`\n== MISSION ACCESS DENIED: ${mission.title} ==`);
+        console.log(
+          `Your current level (${getSkillLevelName(
+            userLevel
+          )}) is insufficient.`
+        );
+        console.log(`Required level: ${getSkillLevelName(requiredLevel)}`);
+        console.log("Complete other missions to improve your skills first.\n");
+      }
+    );
 
     // Set up error handling
     process.on("uncaughtException", (error) => {
@@ -139,6 +199,26 @@ async function main(): Promise<void> {
   } catch (error) {
     console.error("Failed to initialize NEOTERMINAL:", error);
     process.exit(1);
+  }
+}
+
+/**
+ * Get the skill level name from the enum value
+ */
+function getSkillLevelName(level: number): string {
+  switch (level) {
+    case 1:
+      return "INITIATE";
+    case 2:
+      return "OPERATOR";
+    case 3:
+      return "NETRUNNER";
+    case 4:
+      return "GHOST";
+    case 5:
+      return "ARCHITECT";
+    default:
+      return "UNKNOWN";
   }
 }
 

@@ -12,6 +12,22 @@ import { CatCommand } from "./file_operations/CatCommand";
 import { MkdirCommand } from "./file_operations/MkdirCommand";
 import { TouchCommand } from "./file_operations/TouchCommand";
 import { RmCommand } from "./file_operations/RmCommand";
+import { CpCommand } from "./file_operations/CpCommand";
+import { MvCommand } from "./file_operations/MvCommand";
+import { ChmodCommand } from "./file_operations/ChmodCommand";
+import { ChownCommand } from "./file_operations/ChownCommand";
+
+// Text processing commands
+import { GrepCommand } from "./text_processing/GrepCommand";
+import { FindCommand } from "./text_processing/FindCommand";
+import { SortCommand } from "./text_processing/SortCommand";
+
+// System info commands
+import { PsCommand } from "./system_info/PsCommand";
+
+// Network commands
+import { IfconfigCommand } from "./network/IfconfigCommand";
+import { PingCommand } from "./network/PingCommand";
 
 // Utility commands
 import { HelpCommand } from "./utility/HelpCommand";
@@ -38,6 +54,22 @@ export function registerCommands(
   registry.registerCommand(new MkdirCommand());
   registry.registerCommand(new TouchCommand());
   registry.registerCommand(new RmCommand());
+  registry.registerCommand(new CpCommand());
+  registry.registerCommand(new MvCommand());
+  registry.registerCommand(new ChmodCommand());
+  registry.registerCommand(new ChownCommand());
+
+  // Text processing commands
+  registry.registerCommand(new GrepCommand());
+  registry.registerCommand(new FindCommand());
+  registry.registerCommand(new SortCommand());
+
+  // System info commands
+  registry.registerCommand(new PsCommand());
+
+  // Network commands
+  registry.registerCommand(new IfconfigCommand());
+  registry.registerCommand(new PingCommand());
 
   // Utility commands
   registry.registerCommand(new HelpCommand(registry));
