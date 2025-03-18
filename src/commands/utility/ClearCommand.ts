@@ -5,6 +5,8 @@ import {
   CommandResult,
   SkillLevel,
 } from "../../../types";
+import chalk from "chalk";
+import themeManager from "../../terminal/themes/ThemeManager";
 
 /**
  * Clear terminal screen command
@@ -22,11 +24,19 @@ export class ClearCommand implements Command {
     args: string[],
     options: CommandOptions
   ): Promise<CommandResult> {
-    // This command doesn't actually do the clearing here
-    // The TerminalEmulator will handle that when it sees this command result
+    // Get the color palette from the theme manager
+    const palette = themeManager.getColorPalette();
+
+    // Create a welcome message with theme colors after clearing
+    const welcomeMessage = [
+      chalk.hex(palette.primary)("Screen cleared. NEOTERMINAL ready."),
+      chalk.hex(palette.secondary)("Type 'help' for available commands."),
+    ].join("\n");
+
     return {
       success: true,
-      output: "\u001Bc", // ANSI escape sequence to clear screen
+      // ANSI escape sequence to clear screen plus themed welcome message
+      output: `\u001Bc${welcomeMessage}`,
     };
   }
 }

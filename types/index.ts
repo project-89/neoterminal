@@ -54,6 +54,7 @@ export interface TerminalStyle {
   underline?: boolean;
   blink?: boolean;
   inverse?: boolean;
+  useThemeBackground?: boolean;
 }
 
 // Terminal theme definition

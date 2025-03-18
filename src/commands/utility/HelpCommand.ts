@@ -6,6 +6,8 @@ import {
   SkillLevel,
 } from "../../../types";
 import { CommandRegistry } from "../../core/CommandRegistry";
+import chalk from "chalk";
+import themeManager from "../../terminal/themes/ThemeManager";
 
 /**
  * Help command to display command documentation
@@ -28,6 +30,9 @@ export class HelpCommand implements Command {
     args: string[],
     options: CommandOptions
   ): Promise<CommandResult> {
+    // Get the color palette from the theme manager
+    const palette = themeManager.getColorPalette();
+
     // If a command name is provided, show help for that command
     if (args.length > 0) {
       const commandName = args[0];
@@ -42,14 +47,16 @@ export class HelpCommand implements Command {
 
       // Format detailed help for the command
       const helpText = [
-        `COMMAND: ${command.name}`,
+        chalk.hex(palette.primary)(`COMMAND: ${command.name}`),
         `DESCRIPTION: ${command.description}`,
-        `USAGE: ${command.usage}`,
+        `USAGE: ${chalk.hex(palette.secondary)(command.usage)}`,
         ...(command.aliases && command.aliases.length > 0
           ? [`ALIASES: ${command.aliases.join(", ")}`]
           : []),
-        "EXAMPLES:",
-        ...command.examples.map((ex) => `  ${ex}`),
+        chalk.hex(palette.primary)("EXAMPLES:"),
+        ...command.examples.map(
+          (ex) => `  ${chalk.hex(palette.secondary)(ex)}`
+        ),
       ].join("\n");
 
       return {
@@ -75,27 +82,38 @@ export class HelpCommand implements Command {
     });
 
     // Build output
-    const helpText = ["NEOTERMINAL HELP", "================"];
+    const helpText = [
+      chalk.hex(palette.primary)("NEOTERMINAL HELP"),
+      chalk.hex(palette.secondary)("================"),
+    ];
 
     // Add category sections
     categorizedCommands.forEach((commands, category) => {
       if (commands.length === 0) return;
 
       helpText.push("");
-      helpText.push(`${formatCategoryName(category)}:`);
+      helpText.push(
+        chalk.hex(palette.primary)(`${formatCategoryName(category)}:`)
+      );
 
       // Sort commands by name
       commands.sort((a, b) => a.name.localeCompare(b.name));
 
       // Add command list with descriptions
       commands.forEach((cmd) => {
-        helpText.push(`  ${cmd.name.padEnd(10)} - ${cmd.description}`);
+        helpText.push(
+          `  ${chalk.hex(palette.secondary)(cmd.name.padEnd(10))} - ${
+            cmd.description
+          }`
+        );
       });
     });
 
     helpText.push("");
     helpText.push(
-      'Type "help <command>" for detailed information about a specific command.'
+      chalk.hex(palette.output)(
+        'Type "help <command>" for detailed information about a specific command.'
+      )
     );
 
     return {

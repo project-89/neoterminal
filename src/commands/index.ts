@@ -47,6 +47,9 @@ import { AskCommand } from "./utility/AskCommand";
 import { HintCommand } from "./utility/HintCommand";
 import { AnimationCommand } from "./utility/AnimationCommand";
 
+// System commands
+import { ThemeCommand } from "./system/ThemeCommand";
+
 /**
  * Register all available commands in the command registry
  */
@@ -99,6 +102,9 @@ export function registerCommands(
   registry.registerCommand(new AskCommand(skillTracker));
   registry.registerCommand(new HintCommand(missionManager));
   registry.registerCommand(new AnimationCommand());
+
+  // System commands
+  registry.registerCommand(new ThemeCommand());
 
   // TODO: Add more commands as they are implemented
 }

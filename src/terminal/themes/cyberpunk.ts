@@ -1,31 +1,29 @@
 import { TerminalTheme } from "../../../types";
 
 /**
- * Cyberpunk terminal theme with neon colors
+ * Cyberpunk theme - The default theme with neon colors on dark background
  */
 export const cyberpunkTheme: TerminalTheme = {
-  background: "#0C0D16", // Deep dark background
-  foreground: "#E8E8E8", // Bright text for contrast
-  cursor: "#FF00FF", // Neon magenta cursor
-  selection: "#363636", // Subtle selection
+  background: "#0C0C14", // Deep dark blue
+  foreground: "#F8F8F2", // Light grey/white
+  cursor: "#00FF9C", // Neon green
+  selection: "#133e7c", // Dark blue
 
-  // Standard colors
-  black: "#131721",
-  red: "#FC2A54", // Neon red
+  black: "#000000",
+  red: "#FF5555", // Neon red
   green: "#00FF9C", // Neon green
-  yellow: "#FFD400", // Bright yellow
-  blue: "#00BFFF", // Cyan blue
+  yellow: "#FFE600", // Neon yellow
+  blue: "#0085FF", // Neon blue
   magenta: "#FF00FF", // Neon magenta
   cyan: "#00FFFF", // Neon cyan
-  white: "#E8E8E8", // Off-white
+  white: "#F8F8F2", // Light grey/white
 
-  // Bright variants
-  brightBlack: "#565656",
-  brightRed: "#FF5370",
-  brightGreen: "#50FFA0",
-  brightYellow: "#FFEE80",
-  brightBlue: "#50C8FF",
-  brightMagenta: "#FF70FF",
-  brightCyan: "#80FFEA",
+  brightBlack: "#343746",
+  brightRed: "#FF6E67",
+  brightGreen: "#69FF94",
+  brightYellow: "#FFFFA5",
+  brightBlue: "#D6ACFF",
+  brightMagenta: "#FF92DF",
+  brightCyan: "#A4FFFF",
   brightWhite: "#FFFFFF",
 };

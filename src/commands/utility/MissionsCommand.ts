@@ -6,6 +6,9 @@ import {
   SkillLevel,
 } from "../../../types";
 import { MissionManager } from "../../missions/MissionManager";
+import { CommandUtils } from "../../utils/CommandUtils";
+import chalk from "chalk";
+import themeManager from "../../terminal/themes/ThemeManager";
 
 /**
  * Missions command to list and interact with available missions
@@ -54,6 +57,9 @@ export class MissionsCommand implements Command {
           return {
             success: false,
             error: "Missing mission_id. Usage: missions info <mission_id>",
+            output: CommandUtils.error(
+              "Missing mission_id. Usage: missions info <mission_id>"
+            ),
           };
         }
         return this.getMissionInfo(missionId);
@@ -62,6 +68,9 @@ export class MissionsCommand implements Command {
           return {
             success: false,
             error: "Missing mission_id. Usage: missions start <mission_id>",
+            output: CommandUtils.error(
+              "Missing mission_id. Usage: missions start <mission_id>"
+            ),
           };
         }
         return this.startMission(missionId);
@@ -71,6 +80,9 @@ export class MissionsCommand implements Command {
         return {
           success: false,
           error: `Unknown action: ${action}. Valid actions are: list, info, start, active`,
+          output: CommandUtils.error(
+            `Unknown action: ${action}. Valid actions are: list, info, start, active`
+          ),
         };
     }
   }
@@ -80,37 +92,64 @@ export class MissionsCommand implements Command {
    */
   private listMissions(): CommandResult {
     const allMissions = this.missionManager.getAllMissions();
+    const palette = themeManager.getColorPalette();
 
     if (allMissions.length === 0) {
       return {
         success: true,
-        output: "No missions available.",
+        output: CommandUtils.secondary("No missions available."),
       };
     }
 
-    const rows = ["Available Missions:", "==================="];
+    const rows = [
+      CommandUtils.primary("Available Missions:"),
+      CommandUtils.secondary("==================="),
+    ];
 
     // Sort by ID
     allMissions.sort((a, b) => a.id.localeCompare(b.id));
 
     // Format each mission
     allMissions.forEach((mission) => {
-      const status = this.missionManager.isMissionCompleted(mission.id)
-        ? "[COMPLETED]"
-        : this.missionManager.isMissionActive(mission.id)
-        ? "[ACTIVE]"
-        : "[AVAILABLE]";
+      const isCompleted = this.missionManager.isMissionCompleted(mission.id);
+      const isActive = this.missionManager.isMissionActive(mission.id);
 
-      rows.push(`${mission.id}: ${mission.title} ${status}`);
-      rows.push(`  Difficulty: ${"★".repeat(mission.difficulty)}`);
+      let statusText;
+      if (isCompleted) {
+        statusText = CommandUtils.success("[COMPLETED]");
+      } else if (isActive) {
+        statusText = CommandUtils.accent("[ACTIVE]");
+      } else {
+        statusText = CommandUtils.secondary("[AVAILABLE]");
+      }
+
+      const missionTitle = chalk.hex(palette.primary)(
+        `${mission.id}: ${mission.title}`
+      );
+      rows.push(`${missionTitle} ${statusText}`);
+
+      // Difficulty with colored stars
+      const difficultyStars = "★".repeat(mission.difficulty);
+      rows.push(
+        `  ${CommandUtils.secondary("Difficulty:")} ${CommandUtils.warning(
+          difficultyStars
+        )}`
+      );
+
       rows.push(`  ${mission.description}`);
       rows.push(``);
     });
 
     rows.push(
-      'To get more information about a mission, type "missions info <mission_id>"'
+      CommandUtils.accent(
+        'To get more information about a mission, type "missions info <mission_id>"'
+      )
     );
-    rows.push('To start a mission, type "missions start <mission_id>"');
+    rows.push(
+      CommandUtils.accent(
+        'To start a mission, type "missions start <mission_id>"'
+      )
+    );
 
     return {
       success: true,
@@ -123,58 +162,80 @@ export class MissionsCommand implements Command {
    */
   private getMissionInfo(missionId: string): CommandResult {
     const mission = this.missionManager.getMission(missionId);
+    const palette = themeManager.getColorPalette();
 
     if (!mission) {
       return {
         success: false,
         error: `Mission not found: ${missionId}`,
+        output: CommandUtils.error(`Mission not found: ${missionId}`),
       };
     }
 
+    let statusText;
+    if (this.missionManager.isMissionCompleted(mission.id)) {
+      statusText = CommandUtils.success("COMPLETED");
+    } else if (this.missionManager.isMissionActive(mission.id)) {
+      statusText = CommandUtils.accent("ACTIVE");
+    } else {
+      statusText = CommandUtils.secondary("AVAILABLE");
+    }
+
+    const difficultyStars = CommandUtils.warning(
+      "★".repeat(mission.difficulty)
+    );
+
     const rows = [
-      mission.asciiArt || "",
-      `Mission: ${mission.title} (${mission.id})`,
-      `Status: ${
-        this.missionManager.isMissionCompleted(mission.id)
-          ? "COMPLETED"
-          : this.missionManager.isMissionActive(mission.id)
-          ? "ACTIVE"
-          : "AVAILABLE"
-      }`,
-      `Difficulty: ${"★".repeat(mission.difficulty)}`,
-      `Estimated Time: ${mission.estimatedTime} minutes`,
+      mission.asciiArt ? chalk.hex(palette.accent)(mission.asciiArt) : "",
+      CommandUtils.primary(`Mission: ${mission.title} (${mission.id})`),
+      `${CommandUtils.secondary("Status:")} ${statusText}`,
+      `${CommandUtils.secondary("Difficulty:")} ${difficultyStars}`,
+      `${CommandUtils.secondary("Estimated Time:")} ${
+        mission.estimatedTime
+      } minutes`,
       "",
-      "Description:",
+      CommandUtils.primary("Description:"),
       mission.description,
       "",
-      "Briefing:",
+      CommandUtils.primary("Briefing:"),
       mission.briefing,
       "",
-      "Objectives:",
+      CommandUtils.primary("Objectives:"),
     ];
 
     // Format objectives
     mission.objectives.forEach((objective, index) => {
+      const objectiveNumber = CommandUtils.accent(`${index + 1}.`);
+      let objectiveText = "";
+
       if (objective.type === "execute_command") {
-        rows.push(
-          `  ${index + 1}. Execute command: ${objective.command}${
-            objective.args ? " " + objective.args : ""
-          }${objective.count ? " (" + objective.count + " times)" : ""}`
-        );
+        objectiveText = `Execute command: ${CommandUtils.secondary(
+          objective.command
+        )}${objective.args ? " " + objective.args : ""}${
+          objective.count ? " (" + objective.count + " times)" : ""
+        }`;
       } else if (objective.type === "create_file") {
-        rows.push(`  ${index + 1}. Create file: ${objective.path}`);
+        objectiveText = `Create file: ${CommandUtils.secondary(
+          objective.path
+        )}`;
       } else if (objective.type === "modify_file") {
-        rows.push(`  ${index + 1}. Modify file: ${objective.path}`);
+        objectiveText = `Modify file: ${CommandUtils.secondary(
+          objective.path
+        )}`;
       } else if (objective.type === "find_file") {
-        rows.push(`  ${index + 1}. Find file: ${objective.path}`);
+        objectiveText = `Find file: ${CommandUtils.secondary(objective.path)}`;
       } else if (objective.type === "custom") {
-        rows.push(`  ${index + 1}. ${objective.description}`);
+        objectiveText = objective.description;
       }
+
+      rows.push(`  ${objectiveNumber} ${objectiveText}`);
     });
 
     rows.push("");
     rows.push(
-      'To start this mission, type "missions start ' + mission.id + '"'
+      CommandUtils.accent(
+        'To start this mission, type "missions start ' + mission.id + '"'
+      )
     );
 
     return {
@@ -188,11 +249,13 @@ export class MissionsCommand implements Command {
    */
   private startMission(missionId: string): CommandResult {
     const mission = this.missionManager.getMission(missionId);
+    const palette = themeManager.getColorPalette();
 
     if (!mission) {
       return {
         success: false,
         error: `Mission not found: ${missionId}`,
+        output: CommandUtils.error(`Mission not found: ${missionId}`),
       };
     }
 
@@ -200,6 +263,9 @@ export class MissionsCommand implements Command {
       return {
         success: false,
         error: `Mission ${missionId} is already completed.`,
+        output: CommandUtils.error(
+          `Mission ${missionId} is already completed.`
+        ),
       };
     }
 
@@ -207,6 +273,7 @@ export class MissionsCommand implements Command {
       return {
         success: false,
         error: `Mission ${missionId} is already active.`,
+        output: CommandUtils.error(`Mission ${missionId} is already active.`),
       };
     }
 
@@ -217,38 +284,48 @@ export class MissionsCommand implements Command {
       return {
         success: false,
         error: `Failed to start mission: ${missionId}`,
+        output: CommandUtils.error(`Failed to start mission: ${missionId}`),
       };
     }
 
     // Show mission briefing
     const rows = [
-      mission.asciiArt || "",
-      `Mission: ${mission.title}`,
-      `Status: ACTIVE`,
+      mission.asciiArt ? chalk.hex(palette.accent)(mission.asciiArt) : "",
+      CommandUtils.primary(`Mission: ${mission.title}`),
+      `${CommandUtils.secondary("Status:")} ${CommandUtils.accent("ACTIVE")}`,
       "",
-      "Briefing:",
+      CommandUtils.primary("Briefing:"),
       mission.briefing,
       "",
-      "Objectives:",
+      CommandUtils.primary("Objectives:"),
     ];
 
     // Format objectives
     mission.objectives.forEach((objective, index) => {
+      const objectiveNumber = CommandUtils.accent(`${index + 1}.`);
+      let objectiveText = "";
+
       if (objective.type === "execute_command") {
-        rows.push(
-          `  ${index + 1}. Execute command: ${objective.command}${
-            objective.args ? " " + objective.args : ""
-          }${objective.count ? " (" + objective.count + " times)" : ""}`
-        );
+        objectiveText = `Execute command: ${CommandUtils.secondary(
+          objective.command
+        )}${objective.args ? " " + objective.args : ""}${
+          objective.count ? " (" + objective.count + " times)" : ""
+        }`;
       } else if (objective.type === "create_file") {
-        rows.push(`  ${index + 1}. Create file: ${objective.path}`);
+        objectiveText = `Create file: ${CommandUtils.secondary(
+          objective.path
+        )}`;
       } else if (objective.type === "modify_file") {
-        rows.push(`  ${index + 1}. Modify file: ${objective.path}`);
+        objectiveText = `Modify file: ${CommandUtils.secondary(
+          objective.path
+        )}`;
       } else if (objective.type === "find_file") {
-        rows.push(`  ${index + 1}. Find file: ${objective.path}`);
+        objectiveText = `Find file: ${CommandUtils.secondary(objective.path)}`;
       } else if (objective.type === "custom") {
-        rows.push(`  ${index + 1}. ${objective.description}`);
+        objectiveText = objective.description;
       }
+
+      rows.push(`  ${objectiveNumber} ${objectiveText}`);
     });
 
     return {
@@ -262,24 +339,40 @@ export class MissionsCommand implements Command {
    */
   private listActiveMissions(): CommandResult {
     const activeMissions = this.missionManager.getActiveMissions();
+    const palette = themeManager.getColorPalette();
 
     if (activeMissions.length === 0) {
       return {
         success: true,
-        output:
-          'No active missions. Start a mission with "missions start <mission_id>"',
+        output: CommandUtils.secondary(
+          'No active missions. Start a mission with "missions start <mission_id>"'
+        ),
       };
     }
 
-    const rows = ["Active Missions:", "================"];
+    const rows = [
+      CommandUtils.primary("Active Missions:"),
+      CommandUtils.secondary("================"),
+    ];
 
     // Sort by ID
     activeMissions.sort((a, b) => a.id.localeCompare(b.id));
 
     // Format each mission
     activeMissions.forEach((mission) => {
-      rows.push(`${mission.id}: ${mission.title}`);
-      rows.push(`  Difficulty: ${"★".repeat(mission.difficulty)}`);
+      const missionTitle = chalk.hex(palette.primary)(
+        `${mission.id}: ${mission.title}`
+      );
+      rows.push(missionTitle);
+
+      // Difficulty with colored stars
+      const difficultyStars = "★".repeat(mission.difficulty);
+      rows.push(
+        `  ${CommandUtils.secondary("Difficulty:")} ${CommandUtils.warning(
+          difficultyStars
+        )}`
+      );
+
       rows.push(`  ${mission.description}`);
       rows.push(``);
     });

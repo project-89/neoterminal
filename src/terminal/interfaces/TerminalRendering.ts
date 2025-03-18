@@ -1,4 +1,4 @@
-import { TerminalStyle } from "../../../types";
+import { TerminalStyle, TerminalTheme } from "../../../types";
 import { AnimationType, AnimationOptions } from "../animations/types";
 
 /**
@@ -85,4 +85,32 @@ export interface TerminalRendering {
     color?: string,
     duration?: number
   ): Promise<void>;
+
+  /**
+   * Update terminal cursor
+   */
+  updateCursor(row: number, col: number): void;
+
+  /**
+   * Get current terminal dimensions
+   */
+  getDimensions(): { rows: number; cols: number };
+
+  /**
+   * Add a custom element to the terminal
+   */
+  addElement(
+    element: HTMLElement,
+    position?: { row: number; col: number }
+  ): void;
+
+  /**
+   * Remove an element from the terminal
+   */
+  removeElement(element: HTMLElement): void;
+
+  /**
+   * Update the terminal theme
+   */
+  updateTheme(theme: TerminalTheme): void;
 }

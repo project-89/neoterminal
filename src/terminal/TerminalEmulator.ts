@@ -1,11 +1,12 @@
 import EventEmitter from "events";
-import { TerminalStyle } from "../../types";
+import { TerminalStyle, TerminalTheme } from "../../types";
 import { CommandProcessor } from "../core/CommandProcessor";
 import chalk from "chalk";
 import figlet from "figlet";
 import { AnimationOptions, AnimationType } from "./animations/types";
 import defaultAnimationSystem from "./animations";
 import { TerminalRendering } from "./interfaces/TerminalRendering";
+import themeManager from "./themes/ThemeManager";
 
 /**
  * Terminal emulator for command-line interface
@@ -22,6 +23,12 @@ export class TerminalEmulator
   private historyPosition: number = -1;
   private prompt: string = ">";
   private animationEnabled: boolean = false;
+  private theme: TerminalTheme | null = null;
+  private terminalRows: number = 24;
+  private terminalCols: number = 80;
+  private cursorRow: number = 0;
+  private cursorCol: number = 0;
+  private elements: Set<HTMLElement> = new Set();
 
   constructor(commandProcessor: CommandProcessor) {
     super();
@@ -35,6 +42,14 @@ export class TerminalEmulator
     if (this.commandProcessor.setTerminal) {
       this.commandProcessor.setTerminal(this);
     }
+
+    // Initialize with the active theme
+    this.theme = themeManager.getActiveTheme();
+
+    // Listen for theme changes
+    themeManager.onThemeChange((theme) => {
+      this.updateTheme(theme);
+    });
   }
 
   /**
@@ -115,7 +130,13 @@ export class TerminalEmulator
    * Display the command prompt
    */
   public displayPrompt(): void {
-    process.stdout.write(`\n${chalk.cyan(this.prompt)} `);
+    // Use theme colors if available
+    if (this.theme) {
+      const promptColor = this.theme.cyan || this.theme.brightCyan;
+      process.stdout.write(`\n${chalk.hex(promptColor)(this.prompt)} `);
+    } else {
+      process.stdout.write(`\n${chalk.cyan(this.prompt)} `);
+    }
   }
 
   /**
@@ -137,7 +158,15 @@ export class TerminalEmulator
         const result = await this.commandProcessor.process(command);
 
         if (result.output) {
-          console.log(result.output);
+          // Apply theme colors to output if theme is available
+          if (this.theme) {
+            const style: TerminalStyle = {
+              foreground: this.theme.foreground,
+            };
+            this.write(result.output, style);
+          } else {
+            console.log(result.output);
+          }
         }
 
         if (!result.success && result.error) {
@@ -197,10 +226,16 @@ export class TerminalEmulator
 
       if (style.foreground) {
         chalkStyle = chalkStyle.hex(style.foreground);
+      } else if (this.theme) {
+        // Use theme foreground color if no specific color provided
+        chalkStyle = chalkStyle.hex(this.theme.foreground);
       }
 
       if (style.background) {
         chalkStyle = chalkStyle.bgHex(style.background);
+      } else if (this.theme && style.useThemeBackground) {
+        // Use theme background if requested
+        chalkStyle = chalkStyle.bgHex(this.theme.background);
       }
 
       if (style.bold) {
@@ -225,7 +260,8 @@ export class TerminalEmulator
    * Write an error message
    */
   public writeError(message: string): void {
-    console.log(chalk.red(`ERROR: ${message}`));
+    const errorColor = this.theme ? this.theme.red : "red";
+    console.log(chalk.hex(errorColor)(`ERROR: ${message}`));
   }
 
   /**
@@ -387,5 +423,87 @@ export class TerminalEmulator
       duration,
       color,
     });
+  }
+
+  /**
+   * Update cursor position
+   */
+  public updateCursor(row: number, col: number): void {
+    this.cursorRow = row;
+    this.cursorCol = col;
+
+    // In a real implementation with DOM, would update cursor position visually
+    // For this implementation, just emit an event that could be handled by a UI
+    this.emit("cursor-update", { row, col });
+  }
+
+  /**
+   * Get terminal dimensions
+   */
+  public getDimensions(): { rows: number; cols: number } {
+    return {
+      rows: this.terminalRows,
+      cols: this.terminalCols,
+    };
+  }
+
+  /**
+   * Add a custom element to the terminal
+   */
+  public addElement(
+    element: HTMLElement,
+    position?: { row: number; col: number }
+  ): void {
+    if (this.animationEnabled) {
+      this.elements.add(element);
+
+      // In a real implementation, would manipulate DOM
+      // For this implementation, just emit an event
+      this.emit("element-added", { element, position });
+    }
+  }
+
+  /**
+   * Remove an element from the terminal
+   */
+  public removeElement(element: HTMLElement): void {
+    if (this.animationEnabled && this.elements.has(element)) {
+      this.elements.delete(element);
+
+      // In a real implementation, would manipulate DOM
+      // For this implementation, just emit an event
+      this.emit("element-removed", { element });
+    }
+  }
+
+  /**
+   * Update the terminal theme
+   */
+  public updateTheme(theme: TerminalTheme): void {
+    this.theme = theme;
+
+    // Apply theme colors to terminal
+    // In a real implementation with DOM, would update CSS variables or styles
+    // For this implementation, just emit an event
+    this.emit("theme-changed", theme);
+
+    // Log theme change
+    this.write(
+      `Theme changed to: ${theme.foreground} text on ${theme.background} background`,
+      {
+        foreground: theme.foreground,
+        background: theme.background,
+      }
+    );
+  }
+
+  /**
+   * Get theme color by name
+   */
+  public getThemeColor(colorName: keyof TerminalTheme): string {
+    if (!this.theme) {
+      return "";
+    }
+    return this.theme[colorName];
   }
 }

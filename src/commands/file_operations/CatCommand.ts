@@ -5,6 +5,9 @@ import {
   CommandResult,
   SkillLevel,
 } from "../../../types";
+import { CommandUtils } from "../../utils/CommandUtils";
+import themeManager from "../../terminal/themes/ThemeManager";
+import chalk from "chalk";
 
 /**
  * Display file contents command
@@ -23,11 +26,13 @@ export class CatCommand implements Command {
     options: CommandOptions
   ): Promise<CommandResult> {
     const { filesystem } = options;
+    const palette = themeManager.getColorPalette();
 
     if (args.length === 0) {
       return {
         success: false,
         error: "Missing file operand",
+        output: CommandUtils.error("Missing file operand"),
       };
     }
 
@@ -35,14 +40,23 @@ export class CatCommand implements Command {
 
     try {
       const content = filesystem.readFile(filePath);
+
+      // Format the output with a file header and the content
+      const fileHeader = CommandUtils.primary(`File: ${filePath}`);
+      const formattedContent = chalk.hex(palette.output)(content.toString());
+      const output = `${fileHeader}\n${"─".repeat(40)}\n${formattedContent}`;
+
       return {
         success: true,
-        output: content.toString(),
+        output: output,
       };
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
+        output: CommandUtils.error(`Error: ${errorMessage}`),
       };
     }
   }
