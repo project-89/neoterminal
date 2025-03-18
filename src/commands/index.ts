@@ -21,13 +21,23 @@ import { ChownCommand } from "./file_operations/ChownCommand";
 import { GrepCommand } from "./text_processing/GrepCommand";
 import { FindCommand } from "./text_processing/FindCommand";
 import { SortCommand } from "./text_processing/SortCommand";
+import { HeadCommand } from "./text_processing/HeadCommand";
+import { TailCommand } from "./text_processing/TailCommand";
+import { WcCommand } from "./text_processing/WcCommand";
+import { UniqCommand } from "./text_processing/UniqCommand";
+import { SedCommand } from "./text_processing/SedCommand";
+import { AwkCommand } from "./text_processing/AwkCommand";
 
 // System info commands
 import { PsCommand } from "./system_info/PsCommand";
+import { DfCommand } from "./system_info/DfCommand";
+import { DuCommand } from "./system_info/DuCommand";
+import { FreeCommand } from "./system_info/FreeCommand";
 
 // Network commands
 import { IfconfigCommand } from "./network/IfconfigCommand";
 import { PingCommand } from "./network/PingCommand";
+import { NetstatCommand } from "./network/NetstatCommand";
 
 // Utility commands
 import { HelpCommand } from "./utility/HelpCommand";
@@ -63,13 +73,23 @@ export function registerCommands(
   registry.registerCommand(new GrepCommand());
   registry.registerCommand(new FindCommand());
   registry.registerCommand(new SortCommand());
+  registry.registerCommand(new HeadCommand());
+  registry.registerCommand(new TailCommand());
+  registry.registerCommand(new WcCommand());
+  registry.registerCommand(new UniqCommand());
+  registry.registerCommand(new SedCommand());
+  registry.registerCommand(new AwkCommand());
 
   // System info commands
   registry.registerCommand(new PsCommand());
+  registry.registerCommand(new DfCommand());
+  registry.registerCommand(new DuCommand());
+  registry.registerCommand(new FreeCommand());
 
   // Network commands
   registry.registerCommand(new IfconfigCommand());
   registry.registerCommand(new PingCommand());
+  registry.registerCommand(new NetstatCommand());
 
   // Utility commands
   registry.registerCommand(new HelpCommand(registry));
