@@ -1,0 +1,13 @@
+{
+  "provider": "local",
+  "comment": "Change provider to 'claude' or 'gemini' to use those services",
+  
+  "apiKey": "",
+  "comment2": "Insert your API key here when using Claude or Gemini",
+  
+  "model": "",
+  "comment3": "Specify model name or leave empty for defaults (claude-3-sonnet-20240229 for Claude, gemini-pro for Gemini)",
+  
+  "temperature": 0.7,
+  "maxTokens": 500
+} 

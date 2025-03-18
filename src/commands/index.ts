@@ -1,5 +1,6 @@
 import { CommandRegistry } from "../core/CommandRegistry";
 import { MissionManager } from "../missions/MissionManager";
+import { SkillTracker } from "../skills/SkillTracker";
 
 // Navigation commands
 import { CdCommand } from "./navigation/CdCommand";
@@ -16,13 +17,16 @@ import { RmCommand } from "./file_operations/RmCommand";
 import { HelpCommand } from "./utility/HelpCommand";
 import { ClearCommand } from "./utility/ClearCommand";
 import { MissionsCommand } from "./utility/MissionsCommand";
+import { AskCommand } from "./utility/AskCommand";
+import { HintCommand } from "./utility/HintCommand";
 
 /**
  * Register all available commands in the command registry
  */
 export function registerCommands(
   registry: CommandRegistry,
-  missionManager: MissionManager
+  missionManager: MissionManager,
+  skillTracker: SkillTracker
 ): void {
   // Navigation commands
   registry.registerCommand(new CdCommand());
@@ -39,6 +43,8 @@ export function registerCommands(
   registry.registerCommand(new HelpCommand(registry));
   registry.registerCommand(new ClearCommand());
   registry.registerCommand(new MissionsCommand(missionManager));
+  registry.registerCommand(new AskCommand(skillTracker));
+  registry.registerCommand(new HintCommand(missionManager));
 
   // TODO: Add more commands as they are implemented
 }

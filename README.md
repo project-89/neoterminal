@@ -4,89 +4,188 @@
  _   _ _____ ___ _____ ___ ____  __  __ ___ _   _    _    _
 | \ | | ____|  _ \_   _| __| __ \|  \/  |_ _| \ | |  / \  | |
 |  \| |  _| | |_) || | |  _|  __/| |\/| || ||  \| | / _ \ | |
-| |\  | |___|  __/ | | | |_| |  || |  | || || |\  |/ ___ \| |___
-|_| \_|_____|_|    |_| |___|_|  |_|  |_|___|_| \_/_/   \_\_____|
+| |\  | |___| | | || | | |_| |  || |  | || || |\  |/ ___ \| |___
+|_| \_|_____|_| |_||_| |___|_|  |_|  |_|___|_| \_/_/   \_\_____|
 ```
 
-## //> SYSTEM INFILTRATION IN PROGRESS...
+## //> SYSTEM BRIEFING
 
-**[CLASSIFIED]** 
-**ACCESS LEVEL: OPERATIVE EYES ONLY**
+NEOTERMINAL is a cyberpunk hacker simulation designed to teach command line interfaces through an immersive narrative experience. Users learn terminal commands while completing "hacker missions" in a dystopian future setting.
 
-Welcome to NEOTERMINAL - a cyberpunk hacker simulation designed to transform CLI neophytes into terminal masters through immersive missions in a dystopian cyberspace.
+## //> MISSION OBJECTIVE
 
-## //> MISSION BRIEFING
+Transform CLI neophytes into terminal masters through immersive missions in a cyberpunk world. The system adapts to the user's skill level, introducing new commands gradually as they demonstrate proficiency.
 
-_The year is 2057. Megacorporations rule from gleaming arcologies while the digital underground fights for freedom in the shadows of the net. You've been recruited by the hacktivist collective GHOST//SIGNAL to help take down the PANOPTICON system - but first, you need to master the tools of the trade._
+## //> FEATURES
 
-NEOTERMINAL is more than a learning tool - it's a gateway into a world where command line mastery feels like what it truly is: **digital sorcery**. Forget boring tutorials and documentation. NEOTERMINAL uses adaptive AI to analyze your command patterns and construct personalized missions that gradually expand your skillset while keeping you immersed in the cyberpunk narrative.
+- **Immersive Terminal Experience**: A custom terminal interface with cyberpunk aesthetics
+- **Virtual Filesystem**: A secure sandbox for experimenting with commands
+- **Progressive Mission System**: Learn commands through narrative-driven objectives
+- **Skill Tracking**: AI-driven system that monitors command proficiency
+- **Cyberpunk Narrative**: Engaging story that frames the learning experience
+- **AI Integration**: Real API connections to Claude, Gemini, or local offline mode
 
-## //> SYSTEM REQUIREMENTS
-
-- **OS**: Linux/macOS/Windows with WSL
-- **Node.js**: v16.0.0+
-- **RAM**: 4GB+
-- **Storage**: 500MB
-- **Hardware**: Any terminal capable of displaying 256 colors
-- **Wetware**: Human consciousness with desire to transcend mundane computing
-
-## //> QUICK INSTALLATION
+## //> QUICK START
 
 ```bash
-# Clone the digital construct
+# Clone the repo
 git clone https://github.com/ghost-signal/neoterminal.git
 
-# Enter the matrix
+# Enter the directory
 cd neoterminal
 
-# Initialize systems
+# Install dependencies
 npm install
 
-# Activate neural interface
+# Start NEOTERMINAL with the default local AI provider (no API key required)
 npm start
+
+# Or run with a specific AI provider
+AI_PROVIDER=claude AI_API_KEY=your_api_key npm start
 ```
 
-## //> CORE FEATURES
+## //> AI ASSISTANT CONFIGURATION
 
-- **Adaptive Skill Analysis**: AI engine tracks command usage and tailors missions to your skill level
-- **Cyberpunk Narrative**: Progress through a compelling story as you master the CLI
-- **Real-time Feedback**: Receive guidance without breaking immersion
-- **Progress Tracking**: Visualize your command mastery through neural network maps
-- **Sandbox Environment**: Practice in a secure simulation without risk to your actual system
+NEOTERMINAL's AI assistant helps you learn command line skills through personalized guidance. You can choose from multiple AI providers or use the offline mode.
 
-## //> SKILL PROGRESSION PATH
+### Configuration Methods
 
-NEOTERMINAL categorizes operatives into five clearance levels:
+The AI service can be configured in three ways, in order of precedence:
 
-1. **INITIATE**: Navigation, basic file operations, help systems
-2. **OPERATOR**: Advanced file manipulation, text processing, system monitoring
-3. **NETRUNNER**: Text manipulation, networking, process control
-4. **GHOST**: Shell scripting, complex pipelines, advanced networking
-5. **ARCHITECT**: System administration, security operations, performance tuning
+1. **Configuration File**: Create an `ai-config.json` file in one of these locations:
+   - Custom path specified by `AI_CONFIG_PATH` environment variable
+   - Current directory (`./ai-config.json`)
+   - User's home directory (`~/.neoterminal/ai-config.json`)
 
-Your clearance level increases automatically as the system detects improved command fluency.
+2. **Environment Variables**:
+   - `AI_PROVIDER`: Service provider (`claude`, `gemini`, or `local`)
+   - `AI_API_KEY`: Your API key for Claude or Gemini
+   - `AI_MODEL`: Specific model to use (provider-specific)
+   - `AI_TEMPERATURE`: Response creativity (0.0-1.0, default 0.7)
+   - `AI_MAX_TOKENS`: Maximum tokens in responses (default 500)
 
-## //> CONTRIBUTION PROTOCOL
+3. **Default Configuration**: If no custom config is found, the system uses the local provider which works offline without an API key.
 
-NEOTERMINAL is open-source and welcomes contributions from fellow operatives. See `CONTRIBUTING.md` for detailed instructions on how to submit mission ideas, improve the narrative engine, or enhance terminal emulation.
+### Sample Configuration File
 
-## //> SECURITY NOTICE
+Create an `ai-config.json` file with content like this:
 
-NEOTERMINAL operates in a sandboxed environment and does not modify your actual system beyond its installation directory. All commands are intercepted and simulated within the game environment.
-
-## //> CONTACT THE COLLECTIVE
-
-- **Secure Channel**: [github.com/ghost-signal/neoterminal/issues](https://github.com/ghost-signal/neoterminal/issues)
-- **Encrypted Comms**: neoterminal@ghost-signal.net
-- **Neural Feed**: @GhostSignal on all major social nets
-
----
-
-```
-TRANSMISSION ENDS//
-DISCONNECT FROM UPLINK? [Y/N]
+```json
+{
+  "provider": "claude",
+  "apiKey": "your_api_key_here",
+  "model": "claude-3-sonnet-20240229",
+  "temperature": 0.7,
+  "maxTokens": 500
+}
 ```
 
-## License
+### AI Provider Options
+
+- **Claude**: Anthropic's advanced language model (requires API key)
+  - Default model: `claude-3-sonnet-20240229`
+  - Sign up: [https://www.anthropic.com/claude](https://www.anthropic.com/claude)
+
+- **Gemini**: Google's advanced language model (requires API key)
+  - Default model: `gemini-pro`
+  - Sign up: [https://ai.google.dev/](https://ai.google.dev/)
+
+- **Local**: Offline mode with pre-defined responses (no API key required)
+  - Great for learning without external services
+  - Limited to pre-programmed responses
+
+### AI Implementation
+
+NEOTERMINAL uses direct API integrations with AI providers through Axios:
+- Each provider (Claude, Gemini) has a specific implementation that handles:
+  - Authentication with API keys
+  - Request formatting according to provider specifications
+  - Response parsing to extract relevant information
+  - Error handling and retry logic
+- All API calls are made directly to the provider's endpoints with proper headers and parameters
+- The system automatically selects the appropriate implementation based on your configuration
+
+### AI Commands
+
+- `ask <question>` - Ask the AI assistant for help with commands or concepts
+- `hint` - Get contextual hints for your current mission objective
+
+## //> COMMAND REFERENCE
+
+### Navigation
+- `pwd` - Print working directory
+- `ls` - List directory contents
+- `cd` - Change directory
+
+### File Operations
+- `cat` - Display file contents
+- `mkdir` - Create directory
+- `touch` - Create empty file
+- `rm` - Remove files or directories
+
+### Utility
+- `help` - Display help information
+- `clear` - Clear terminal screen
+- `missions` - View and manage missions
+- `ask` - Ask the AI assistant a question
+- `hint` - Get a hint for the current mission objective
+
+## //> MISSION SYSTEM
+
+Missions are the heart of NEOTERMINAL. Each mission provides objectives that teach specific terminal commands in the context of the cyberpunk narrative.
+
+Commands:
+- `missions list` - List all available missions
+- `missions info <id>` - Get detailed information about a mission
+- `missions start <id>` - Start a mission
+- `missions active` - List currently active missions
+
+## //> PROJECT STRUCTURE
+
+```
+neoterminal/
+├── src/
+│   ├── ai/             # AI service integration
+│   ├── core/           # Core system components
+│   ├── terminal/       # Terminal emulation
+│   ├── commands/       # Command definitions
+│   ├── missions/       # Mission system
+│   ├── narrative/      # Story content (Phase 2)
+│   ├── skills/         # Skill tracking
+│   ├── filesystem/     # Virtual filesystem
+│   └── index.ts        # Application entry point
+├── types/              # TypeScript type definitions
+└── docs/               # Documentation
+```
+
+## //> DEVELOPMENT ROADMAP
+
+**Phase 1**: Core System Implementation
+- Terminal emulator with cyberpunk aesthetics
+- Virtual filesystem
+- Basic command set
+- Initial mission framework
+
+**Phase 2**: Adaptive Intelligence Integration *(Current)*
+- AI-driven skill analysis
+- Expanded command library
+- Dynamic mission difficulty
+- Enhanced visual feedback
+
+**Phase 3**: Community & Extension
+- Community mission submissions
+- Multiplayer challenges
+- Custom terminal themes
+- Advanced narrative branching
+
+## //> CONTRIBUTION
+
+NEOTERMINAL is open to contributions! Check out the [CONTRIBUTING.md](docs/CONTRIBUTING.md) file for details on how to submit bug reports, feature requests, or code contributions.
+
+## //> LICENSE
 
 MIT © GHOST//SIGNAL COLLECTIVE
+
+```
+// END OF TRANSMISSION
+// DISCONNECT FROM UPLINK? [Y/N]

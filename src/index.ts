@@ -6,12 +6,19 @@ import { TerminalEmulator } from "./terminal/TerminalEmulator";
 import { registerCommands } from "./commands";
 import { MissionManager } from "./missions/MissionManager";
 import { initialMissions } from "./missions/initial-missions";
+import { AIServiceManager } from "./ai";
+import { loadConfig } from "./ai/config";
 
 /**
  * Main application entry point
  */
 async function main(): Promise<void> {
   try {
+    // Initialize AI service
+    const aiConfig = loadConfig();
+    console.log(`Initializing AI service with provider: ${aiConfig.provider}`);
+    await AIServiceManager.initializeService(aiConfig);
+
     // Create core system components
     const filesystem = new VirtualFileSystem();
     const commandRegistry = new CommandRegistry();
@@ -21,7 +28,7 @@ async function main(): Promise<void> {
     const missionManager = new MissionManager(filesystem);
 
     // Register commands
-    registerCommands(commandRegistry, missionManager);
+    registerCommands(commandRegistry, missionManager, skillTracker);
 
     // Initialize missions
     initialMissions.forEach((mission) => {

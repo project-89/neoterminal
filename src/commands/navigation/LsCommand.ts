@@ -5,7 +5,11 @@ import {
   CommandResult,
   SkillLevel,
 } from "../../../types";
-import { VirtualDirectory, VirtualFile } from "../../filesystem/VirtualNodes";
+import {
+  VirtualDirectory,
+  VirtualFile,
+  VirtualNode,
+} from "../../filesystem/VirtualNodes";
 
 /**
  * List directory contents command
@@ -49,7 +53,7 @@ export class LsCommand implements Command {
       // Filter hidden files (starting with .) unless -a flag is used
       const filteredNodes = showHidden
         ? nodes
-        : nodes.filter((node) => !node.name.startsWith("."));
+        : nodes.filter((node: VirtualNode) => !node.name.startsWith("."));
 
       if (filteredNodes.length === 0) {
         return {
@@ -60,7 +64,7 @@ export class LsCommand implements Command {
 
       if (longFormat) {
         // Long format listing
-        const rows = filteredNodes.map((node) => {
+        const rows = filteredNodes.map((node: VirtualNode) => {
           const type = node instanceof VirtualDirectory ? "d" : "-";
           const size = node.size().toString().padStart(8, " ");
           const date = node.modified.toISOString().substring(0, 10);
@@ -77,7 +81,7 @@ export class LsCommand implements Command {
         };
       } else {
         // Simple listing
-        const items = filteredNodes.map((node) =>
+        const items = filteredNodes.map((node: VirtualNode) =>
           node instanceof VirtualDirectory
             ? `\x1b[36m${node.name}/\x1b[0m`
             : node.name
