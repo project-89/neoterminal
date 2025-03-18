@@ -21,6 +21,7 @@
   "author": "GHOST//SIGNAL COLLECTIVE",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.6.8",
     "chalk": "^4.1.2",
     "commander": "^9.0.0",
     "eventemitter3": "^4.0.7",
@@ -57,6 +58,12 @@
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios)/)"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
     "moduleNameMapper": {
       "@core/(.*)": "<rootDir>/src/core/$1",
       "@terminal/(.*)": "<rootDir>/src/terminal/$1",
