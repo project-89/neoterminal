@@ -45,6 +45,7 @@ import { ClearCommand } from "./utility/ClearCommand";
 import { MissionsCommand } from "./utility/MissionsCommand";
 import { AskCommand } from "./utility/AskCommand";
 import { HintCommand } from "./utility/HintCommand";
+import { AnimationCommand } from "./utility/AnimationCommand";
 
 /**
  * Register all available commands in the command registry
@@ -97,6 +98,7 @@ export function registerCommands(
   registry.registerCommand(new MissionsCommand(missionManager));
   registry.registerCommand(new AskCommand(skillTracker));
   registry.registerCommand(new HintCommand(missionManager));
+  registry.registerCommand(new AnimationCommand());
 
   // TODO: Add more commands as they are implemented
 }

@@ -6,7 +6,7 @@ export enum CommandCategory {
   TEXT_PROCESSING = "text_processing",
   NETWORK = "network",
   UTILITY = "utility",
-  ADVANCED = "advanced"
+  ADVANCED = "advanced",
 }
 
 // Skill levels
@@ -15,7 +15,7 @@ export enum SkillLevel {
   OPERATOR = 2,
   NETRUNNER = 3,
   GHOST = 4,
-  ARCHITECT = 5
+  ARCHITECT = 5,
 }
 
 // Command definition
@@ -35,6 +35,7 @@ export interface CommandOptions {
   currentDirectory: string;
   filesystem: any; // Will be typed properly once FileSystem is implemented
   env: Record<string, string>;
+  terminal?: any; // Terminal instance for special commands that need rendering capabilities
 }
 
 // Command execution result
@@ -130,11 +131,11 @@ export interface StoryChoice {
   conditions?: StoryCondition[];
 }
 
-export type StoryCondition = 
-  | { type: "mission_complete", missionId: string }
-  | { type: "skill_level", category: CommandCategory, level: number }
-  | { type: "command_used", command: string, count: number }
-  | { type: "item_acquired", itemId: string };
+export type StoryCondition =
+  | { type: "mission_complete"; missionId: string }
+  | { type: "skill_level"; category: CommandCategory; level: number }
+  | { type: "command_used"; command: string; count: number }
+  | { type: "item_acquired"; itemId: string };
 
 export interface Character {
   id: string;
@@ -162,11 +163,11 @@ export interface Mission {
 }
 
 export type MissionObjective =
-  | { type: "execute_command", command: string, args?: string, count?: number }
-  | { type: "create_file", path: string, content?: string }
-  | { type: "modify_file", path: string, contentMatch?: RegExp }
-  | { type: "find_file", path: string }
-  | { type: "custom", description: string, validator: () => boolean };
+  | { type: "execute_command"; command: string; args?: string; count?: number }
+  | { type: "create_file"; path: string; content?: string }
+  | { type: "modify_file"; path: string; contentMatch?: RegExp }
+  | { type: "find_file"; path: string }
+  | { type: "custom"; description: string; validator: () => boolean };
 
 export interface MissionEnvironment {
   filesystem: any; // Will be typed properly once FileSystem is implemented
@@ -175,7 +176,7 @@ export interface MissionEnvironment {
 }
 
 export type MissionReward =
-  | { type: "skill_points", category: CommandCategory, points: number }
-  | { type: "unlock_command", command: string }
-  | { type: "unlock_area", path: string }
-  | { type: "story_progression", nodeId: string }; 
+  | { type: "skill_points"; category: CommandCategory; points: number }
+  | { type: "unlock_command"; command: string }
+  | { type: "unlock_area"; path: string }
+  | { type: "story_progression"; nodeId: string };

@@ -3,22 +3,38 @@ import { TerminalStyle } from "../../types";
 import { CommandProcessor } from "../core/CommandProcessor";
 import chalk from "chalk";
 import figlet from "figlet";
+import { AnimationOptions, AnimationType } from "./animations/types";
+import defaultAnimationSystem from "./animations";
+import { TerminalRendering } from "./interfaces/TerminalRendering";
 
 /**
  * Terminal emulator for command-line interface
  * Note: In a browser environment, this would use xterm.js
  * For this implementation, we're using a simplified version for Node.js
  */
-export class TerminalEmulator extends EventEmitter {
+export class TerminalEmulator
+  extends EventEmitter
+  implements TerminalRendering
+{
   private commandProcessor: CommandProcessor;
   private inputBuffer: string = "";
   private commandHistory: string[] = [];
   private historyPosition: number = -1;
   private prompt: string = ">";
+  private animationEnabled: boolean = false;
 
   constructor(commandProcessor: CommandProcessor) {
     super();
     this.commandProcessor = commandProcessor;
+
+    // Check if we're in a browser environment where animations can be used
+    this.animationEnabled =
+      typeof window !== "undefined" && typeof document !== "undefined";
+
+    // Set terminal in command processor to enable animation commands
+    if (this.commandProcessor.setTerminal) {
+      this.commandProcessor.setTerminal(this);
+    }
   }
 
   /**
@@ -224,5 +240,152 @@ export class TerminalEmulator extends EventEmitter {
    */
   public setPrompt(prompt: string): void {
     this.prompt = prompt;
+  }
+
+  /**
+   * Play an animation in the terminal
+   * @param type Animation type to play
+   * @param options Animation options
+   * @returns Promise that resolves when animation completes
+   */
+  public async playAnimation(
+    type: AnimationType,
+    options?: AnimationOptions
+  ): Promise<void> {
+    if (!this.animationEnabled) {
+      console.log(`[Animation: ${type}]`);
+      return Promise.resolve();
+    }
+
+    return defaultAnimationSystem.play(type, options);
+  }
+
+  /**
+   * Apply a glitch effect to terminal text
+   * @param element Target element or selector
+   * @param intensity Effect intensity (0-1)
+   * @param duration Duration in milliseconds
+   */
+  public async applyGlitchEffect(
+    element: string | HTMLElement,
+    intensity: number = 0.5,
+    duration: number = 2000
+  ): Promise<void> {
+    if (!this.animationEnabled) {
+      console.log(`[Glitch effect applied]`);
+      return Promise.resolve();
+    }
+
+    return this.playAnimation(AnimationType.GLITCH, {
+      container:
+        typeof element === "string"
+          ? (document.querySelector(element) as HTMLElement)
+          : element,
+      duration,
+      intensity,
+    });
+  }
+
+  /**
+   * Apply a typing animation to text
+   * @param text Text to animate
+   * @param options Animation options
+   */
+  public async typeText(
+    text: string,
+    options?: AnimationOptions
+  ): Promise<void> {
+    if (!this.animationEnabled) {
+      console.log(text);
+      return Promise.resolve();
+    }
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    try {
+      return await this.playAnimation(AnimationType.TYPING, {
+        container,
+        text,
+        ...options,
+      });
+    } finally {
+      if (options?.container) {
+        // If container was provided in options, don't remove it
+        container.remove();
+      }
+    }
+  }
+
+  /**
+   * Apply a matrix rain effect
+   * @param duration Duration in milliseconds
+   * @param container Target container element
+   */
+  public async playMatrixRain(
+    duration: number = 5000,
+    container?: HTMLElement
+  ): Promise<void> {
+    if (!this.animationEnabled) {
+      console.log(`[Matrix rain animation played for ${duration}ms]`);
+      return Promise.resolve();
+    }
+
+    return this.playAnimation(AnimationType.MATRIX_RAIN, {
+      duration,
+      container,
+    });
+  }
+
+  /**
+   * Apply a flicker effect to terminal elements
+   * @param element Target element or selector
+   * @param intensity Effect intensity (0-1)
+   * @param duration Duration in milliseconds
+   */
+  public async applyFlickerEffect(
+    element: string | HTMLElement,
+    intensity: number = 0.5,
+    duration: number = 2000
+  ): Promise<void> {
+    if (!this.animationEnabled) {
+      console.log(`[Flicker effect applied]`);
+      return Promise.resolve();
+    }
+
+    return this.playAnimation(AnimationType.FLICKER, {
+      container:
+        typeof element === "string"
+          ? (document.querySelector(element) as HTMLElement)
+          : element,
+      duration,
+      intensity,
+    });
+  }
+
+  /**
+   * Apply a pulse effect to terminal elements
+   * @param element Target element or selector
+   * @param color Color for the pulse
+   * @param duration Duration in milliseconds
+   */
+  public async applyPulseEffect(
+    element: string | HTMLElement,
+    color?: string,
+    duration: number = 3000
+  ): Promise<void> {
+    if (!this.animationEnabled) {
+      console.log(`[Pulse effect applied]`);
+      return Promise.resolve();
+    }
+
+    return this.playAnimation(AnimationType.PULSE, {
+      container:
+        typeof element === "string"
+          ? (document.querySelector(element) as HTMLElement)
+          : element,
+      duration,
+      color,
+    });
   }
 }

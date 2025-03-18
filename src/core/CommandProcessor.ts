@@ -2,6 +2,7 @@ import { CommandResult } from "../../types";
 import { CommandRegistry } from "./CommandRegistry";
 import { VirtualFileSystem } from "../filesystem/VirtualFileSystem";
 import EventEmitter from "events";
+import { TerminalRendering } from "../terminal/interfaces/TerminalRendering";
 
 export interface CommandExecutionContext {
   command: string;
@@ -18,11 +19,19 @@ export interface CommandExecutionContext {
 export class CommandProcessor extends EventEmitter {
   private commandRegistry: CommandRegistry;
   private fileSystem: VirtualFileSystem;
+  private terminal: TerminalRendering | null = null;
 
   constructor(commandRegistry: CommandRegistry, fileSystem: VirtualFileSystem) {
     super();
     this.commandRegistry = commandRegistry;
     this.fileSystem = fileSystem;
+  }
+
+  /**
+   * Set the terminal instance for rendering capabilities
+   */
+  public setTerminal(terminal: TerminalRendering): void {
+    this.terminal = terminal;
   }
 
   /**
@@ -61,6 +70,7 @@ export class CommandProcessor extends EventEmitter {
         currentDirectory: this.fileSystem.getCurrentPath(),
         filesystem: this.fileSystem,
         env: process.env as Record<string, string>,
+        terminal: this.terminal,
       });
 
       // Track command execution
