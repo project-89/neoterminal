@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEOTERMINAL - Narrative Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .narrative-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            color: #c0c5ce;
+        }
+        
+        .narrative-title {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        
+        .speaker-name {
+            color: #ff79c6;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .narrative-content {
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .choice-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .choice-item {
+            background-color: #004466;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .choice-item:hover {
+            background-color: #006699;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .chapter-title {
+            color: #50fa7b;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .narrative-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #6272a4;
+            margin-bottom: 10px;
+        }
+        
+        .node-id {
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>NEOTERMINAL - Narrative Viewer</h1>
+    
+    <div class="narrative-container">
+        <div class="narrative-info">
+            <span class="chapter-title">Chapter 1: The Awakening</span>
+            <span class="node-id">node_001_intro</span>
+        </div>
+        
+        <div class="narrative-title">An Unexpected Message</div>
+        
+        <div class="narrative-content">Your terminal blinks with an incoming message. Strange, you weren't expecting any communications on this secure channel.
+        
+"ATTENTION: CITIZEN #45601-B. YOUR DIGITAL FOOTPRINT HAS BEEN FLAGGED FOR REVIEW."
+
+The message freezes your blood. A PANOPTICON notice - the ubiquitous surveillance system that monitors all digital activity. What did you do to trigger this?
+
+Before you can process your thoughts, the message flickers and changes:
+
+"DISREGARD PREVIOUS MESSAGE. SECURE CONNECTION ESTABLISHED. 
+
+We've been watching you. Your skills are impressive. Not many can bypass a level-3 security node without triggering alarms. We have a proposition for you."</div>
+        
+        <div class="choice-list">
+            <div class="choice-item">"Who is this? How did you access my secure terminal?"</div>
+            <div class="choice-item">"I'm listening. What kind of proposition?"</div>
+            <div class="choice-item">Terminate the connection immediately</div>
+        </div>
+    </div>
+    
+    <!-- Narrative Scripts -->
+    <script src="narrative-viewer.js"></script>
+</body>
+</html> 

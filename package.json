@@ -9,7 +9,8 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts",
-    "prettier": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\""
+    "prettier": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
+    "narrative": "ts-node src/narrative-test.ts"
   },
   "keywords": [
     "terminal",

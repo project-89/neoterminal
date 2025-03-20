@@ -46,6 +46,7 @@ import { MissionsCommand } from "./utility/MissionsCommand";
 import { AskCommand } from "./utility/AskCommand";
 import { HintCommand } from "./utility/HintCommand";
 import { AnimationCommand } from "./utility/AnimationCommand";
+import { AsciiCommand } from "./utility/AsciiCommand";
 
 // System commands
 import { ThemeCommand } from "./system/ThemeCommand";
@@ -102,6 +103,7 @@ export function registerCommands(
   registry.registerCommand(new AskCommand(skillTracker));
   registry.registerCommand(new HintCommand(missionManager));
   registry.registerCommand(new AnimationCommand());
+  registry.registerCommand(new AsciiCommand());
 
   // System commands
   registry.registerCommand(new ThemeCommand());

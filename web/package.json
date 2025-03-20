@@ -1,0 +1,17 @@
+{
+  "name": "neoterminal-web",
+  "version": "1.0.0",
+  "description": "Web interface for the NEOTERMINAL application",
+  "main": "index.html",
+  "scripts": {
+    "start": "bash server.sh",
+    "install-deps": "npm install xterm xterm-addon-fit xterm-addon-web-links"
+  },
+  "dependencies": {
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.7.0",
+    "xterm-addon-web-links": "^0.8.0"
+  },
+  "author": "GHOST//SIGNAL",
+  "license": "MIT"
+}

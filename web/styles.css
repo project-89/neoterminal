@@ -1,0 +1,208 @@
+/* NEOTERMINAL Web Interface Styles */
+
+body {
+    background-color: #0f111a;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #c0c5ce;
+}
+
+h1 {
+    color: #00ffff;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+    margin-bottom: 10px;
+}
+
+#terminal-container {
+    flex: 1;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    padding: 5px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    overflow: hidden;
+    position: relative;
+}
+
+.control-panel {
+    display: flex;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+}
+
+button {
+    background-color: #004466;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+button:hover {
+    background-color: #006699;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+button.active {
+    background-color: #00aaff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    animation: pulse-button 1.5s infinite;
+}
+
+/* Animation controls specific styling */
+#animateGlitch.active {
+    background-color: #ff5555; /* Red */
+    box-shadow: 0 0 15px rgba(255, 85, 85, 0.5);
+}
+
+#animateMatrix.active {
+    background-color: #50fa7b; /* Green */
+    box-shadow: 0 0 15px rgba(80, 250, 123, 0.5);
+}
+
+#animateTyping.active {
+    background-color: #f1fa8c; /* Yellow */
+    box-shadow: 0 0 15px rgba(241, 250, 140, 0.5);
+    color: #282a36;
+}
+
+#animatePulse.active {
+    background-color: #bd93f9; /* Purple */
+    box-shadow: 0 0 15px rgba(189, 147, 249, 0.5);
+}
+
+#stopAnimations {
+    background-color: #ff5555;
+}
+
+#stopAnimations:hover {
+    background-color: #ff3333;
+    box-shadow: 0 0 10px rgba(255, 85, 85, 0.5);
+}
+
+#clearTerminal {
+    background-color: #6272a4;
+}
+
+#clearTerminal:hover {
+    background-color: #7282b4;
+}
+
+@keyframes pulse-button {
+    0% {
+        box-shadow: 0 0 5px currentColor;
+    }
+    50% {
+        box-shadow: 0 0 20px currentColor;
+    }
+    100% {
+        box-shadow: 0 0 5px currentColor;
+    }
+}
+
+.mode-toggle {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #6c7086;
+    margin-top: 5px;
+    padding: 0 5px;
+}
+
+.narrative-link {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 8px 16px;
+    background-color: #6272a4;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.narrative-link:hover {
+    background-color: #7282b4;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+    background-color: #50fa7b;
+    box-shadow: 0 0 5px rgba(80, 250, 123, 0.5);
+}
+
+/* Loading animation */
+.loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+}
+
+.loader span {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00ffff;
+    margin: 0 5px;
+    animation: loader 1s infinite alternate;
+}
+
+.loader span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loader span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes loader {
+    0% {
+        opacity: 0.1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-10px);
+    }
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+} 

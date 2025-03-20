@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NEOTERMINAL - Web Interface</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+        // Debug information
+        console.log("Starting NEOTERMINAL Web Interface...");
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Error occurred:", message, "at", source, "line", lineno);
+            document.body.innerHTML += `<div style="color:red; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); padding:10px;">
+                ERROR: ${message} at ${source} line ${lineno}
+            </div>`;
+            return true;
+        };
+    </script>
+</head>
+<body>
+    <h1>NEOTERMINAL - Web Interface</h1>
+    
+    <div class="mode-toggle">
+        <button id="fullAppMode" class="active">Full Terminal</button>
+        <button id="demoMode">Animation Demo</button>
+        <a href="narrative.html" class="narrative-link">Narrative Viewer</a>
+    </div>
+    
+    <div id="demo-controls" class="control-panel" style="display: none;">
+        <button id="testAscii">Test ASCII Art</button>
+        <button id="animateGlitch">Animate Glitch Effect</button>
+        <button id="animateMatrix">Animate Matrix Rain</button>
+        <button id="animateTyping">Animate Typing Effect</button>
+        <button id="animatePulse">Animate Pulse Effect</button>
+        <button id="stopAnimations">Stop Animations</button>
+        <button id="clearTerminal">Clear Terminal</button>
+    </div>
+    
+    <div id="terminal-container">
+        <div class="loader">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+    
+    <div class="info-bar">
+        <div>
+            <span class="status-indicator"></span>
+            <span id="status-text">Connected</span>
+        </div>
+        <div id="clock"></div>
+    </div>
+
+    <script>
+        console.log("Preparing to load dependencies...");
+        // Check if files exist
+        function checkFileExists(url, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    callback(xhr.status === 200);
+                }
+            };
+            xhr.open('HEAD', url, true);
+            xhr.send();
+        }
+
+        // Check xterm.js
+        checkFileExists('../node_modules/xterm/lib/xterm.js', function(exists) {
+            console.log('xterm.js exists:', exists);
+        });
+        
+        // Check fit addon
+        checkFileExists('../node_modules/xterm-addon-fit/lib/xterm-addon-fit.js', function(exists) {
+            console.log('xterm-addon-fit.js exists:', exists);
+        });
+        
+        // Check web links addon
+        checkFileExists('../node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js', function(exists) {
+            console.log('xterm-addon-web-links.js exists:', exists);
+        });
+    </script>
+
+    <script src="../node_modules/xterm/lib/xterm.js"></script>
+    <script src="../node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+    <script src="../node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js"></script>
+    <script src="animations.js"></script>
+    <script src="app.js"></script>
+    <script>
+        console.log("All scripts loaded. Initializing terminal...");
+        try {
+            // Initialize terminal
+            const terminal = new Terminal({
+                cursorBlink: true,
+                cursorStyle: 'block',
+                fontFamily: 'monospace',
+                fontSize: 14,
+                lineHeight: 1.2,
+                theme: {
+                    background: '#0f111a',
+                    foreground: '#c0c5ce',
+                    cursor: '#00ffff',
+                    cursorAccent: '#00ffff',
+                    // Cyberpunk-ish color scheme
+                    black: '#282a36',
+                    red: '#ff5555',
+                    green: '#50fa7b',
+                    yellow: '#f1fa8c',
+                    blue: '#bd93f9',
+                    magenta: '#ff79c6',
+                    cyan: '#8be9fd',
+                    white: '#f8f8f2',
+                    brightBlack: '#6272a4',
+                    brightRed: '#ff6e6e',
+                    brightGreen: '#69ff94',
+                    brightYellow: '#ffffa5',
+                    brightBlue: '#d6acff',
+                    brightMagenta: '#ff92df',
+                    brightCyan: '#a4ffff',
+                    brightWhite: '#ffffff'
+                },
+                allowTransparency: true,
+                renderType: 'canvas',
+                convertEol: true,
+                drawBoldTextInBrightColors: true,
+                cols: 80,
+                rows: 24,
+                scrollback: 1000
+            });
+
+            console.log("Terminal object created");
+
+            // Check if FitAddon exists
+            console.log("FitAddon exists:", typeof FitAddon !== 'undefined');
+            
+            // Create FitAddon for responsive terminal
+            const fitAddon = new FitAddon.FitAddon();
+            terminal.loadAddon(fitAddon);
+            
+            // Check if WebLinksAddon exists
+            console.log("WebLinksAddon exists:", typeof WebLinksAddon !== 'undefined');
+            terminal.loadAddon(new WebLinksAddon.WebLinksAddon());
+
+            console.log("Addons loaded");
+
+            // Show loading animation
+            document.querySelector('.loader').style.display = 'block';
+
+            // Open terminal
+            terminal.open(document.getElementById('terminal-container'));
+            fitAddon.fit();
+
+            console.log("Terminal opened and fitted");
+
+            // Hide loading animation after terminal is loaded
+            setTimeout(() => {
+                document.querySelector('.loader').style.display = 'none';
+            }, 1000);
+
+            // Handle window resize
+            window.addEventListener('resize', () => fitAddon.fit());
+
+            console.log("Initializing animation system and terminal app");
+            
+            // Check if animations class exists
+            console.log("TerminalAnimations exists:", typeof TerminalAnimations !== 'undefined');
+            
+            // Check if app class exists
+            console.log("WebTerminalApp exists:", typeof WebTerminalApp !== 'undefined');
+
+            // Initialize animation system and terminal app
+            const animations = new TerminalAnimations(terminal);
+            const app = new WebTerminalApp(terminal);
+
+            console.log("Setup complete! Terminal is ready to use.");
+
+            // Setup mode toggle buttons
+            const fullAppModeBtn = document.getElementById('fullAppMode');
+            const demoModeBtn = document.getElementById('demoMode');
+            const demoControls = document.getElementById('demo-controls');
+
+            fullAppModeBtn.addEventListener('click', () => {
+                fullAppModeBtn.classList.add('active');
+                demoModeBtn.classList.remove('active');
+                demoControls.style.display = 'none';
+                
+                // Clear terminal and reset app
+                terminal.clear();
+                const app = new WebTerminalApp(terminal);
+            });
+
+            demoModeBtn.addEventListener('click', () => {
+                demoModeBtn.classList.add('active');
+                fullAppModeBtn.classList.remove('active');
+                demoControls.style.display = 'flex';
+                
+                // Clear terminal and show demo welcome
+                terminal.clear();
+                terminal.writeln('\x1b[36m\r\nNEOTERMINAL - Animation Demo Mode\x1b[0m');
+                terminal.writeln('\r\nUse the buttons above to test different animation effects.');
+                terminal.writeln('These demonstrate how animations would appear in the full application.\r\n');
+                terminal.write('> ');
+            });
+
+            // ASCII Art examples for demo mode
+            const asciiArt = {
+                terminal_logo: `
+███╗   ██╗███████╗ ██████╗ ████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗     
+████╗  ██║██╔════╝██╔═══██╗╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║████╗  ██║██╔══██╗██║     
+██╔██╗ ██║█████╗  ██║   ██║   ██║   █████╗  ██████╔╝██╔████╔██║██║██╔██╗ ██║███████║██║     
+██║╚██╗██║██╔══╝  ██║   ██║   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██╔══██║██║     
+██║ ╚████║███████╗╚██████╔╝   ██║   ███████╗██║  ██║██║ ╚═╝ ██║██║██║ ╚████║██║  ██║███████╗
+╚═╝  ╚═══╝╚══════╝ ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝`,
+                hacker: `
+    .==.        .==.
+    //\`\`\\      //^\\\\
+   // ^ \\\\    // ^ \\\\
+  //  ^\  \\\\  // ^ .\\\\
+ //  ^  \\\\ \\\\ // ^  \\\\\\
+// ^    ^\\\\ \\\\// ^    \\\\
+\\\\ ^    ^ \\\\/\\/ ^     ^//
+ \\\\ ^   ^ /\\\\ ^    ^ //
+  \\\\^ ^ / \\\\\\ ^ ^ ^ //
+   \\\\/ /   \\\\\\ ^ ^ /
+    ==^     ^==
+     ||     ||
+     ||     ||
+     ||     ||
+      \\\\   //
+       \\\\=//
+        ^^^`,
+                neural_network: `
+      ●
+     /|\\
+    ● ● ●
+   /|\\|/|\\
+  ● ● ● ● ●
+ /|\\|/|\\|/|\\
+● ● ● ● ● ● ●`
+            };
+
+            // Demo mode button handlers
+            document.getElementById('testAscii').addEventListener('click', () => {
+                terminal.writeln('\r\n\x1b[36mDisplaying ASCII Art Examples:\x1b[0m\r\n');
+                terminal.writeln('\x1b[33mTerminal Logo:\x1b[0m');
+                terminal.writeln('\x1b[36m' + asciiArt.terminal_logo + '\x1b[0m\r\n');
+                terminal.writeln('\x1b[33mHacker:\x1b[0m');
+                terminal.writeln('\x1b[32m' + asciiArt.hacker + '\x1b[0m\r\n');
+                terminal.writeln('\x1b[33mNeural Network:\x1b[0m');
+                terminal.writeln('\x1b[35m' + asciiArt.neural_network + '\x1b[0m\r\n');
+                terminal.write('> ');
+            });
+
+            document.getElementById('animateGlitch').addEventListener('click', () => {
+                animations.applyGlitchEffect(asciiArt.hacker, 5000, 0.3);
+            });
+
+            document.getElementById('animateMatrix').addEventListener('click', () => {
+                animations.applyMatrixRain(8000);
+            });
+
+            document.getElementById('animateTyping').addEventListener('click', () => {
+                const text = "Initializing neural interface... Connection established. Welcome to the network, Netrunner. The system awaits your command.";
+                animations.applyTypingEffect(text, 4000);
+            });
+
+            document.getElementById('animatePulse').addEventListener('click', () => {
+                animations.applyPulseEffect(asciiArt.neural_network, 5000);
+            });
+
+            document.getElementById('stopAnimations').addEventListener('click', () => {
+                animations.stopAllAnimations();
+            });
+
+            document.getElementById('clearTerminal').addEventListener('click', () => {
+                terminal.clear();
+                terminal.writeln('\x1b[36m\r\nTerminal Cleared\x1b[0m\r\n');
+                terminal.write('> ');
+            });
+
+            // Clock functionality
+            function updateClock() {
+                const now = new Date();
+                let hours = now.getHours();
+                let minutes = now.getMinutes();
+                let seconds = now.getSeconds();
+                
+                // Add leading zeros
+                hours = hours < 10 ? '0' + hours : hours;
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                
+                const timeString = `${hours}:${minutes}:${seconds}`;
+                document.getElementById('clock').textContent = timeString;
+            }
+            
+            // Update clock every second
+            setInterval(updateClock, 1000);
+            updateClock(); // Initialize clock
+            
+            // Status indicator toggle for demo purposes
+            let connectionStatus = true;
+            const statusIndicator = document.querySelector('.status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            function toggleStatus() {
+                connectionStatus = !connectionStatus;
+                
+                if (connectionStatus) {
+                    statusIndicator.style.backgroundColor = '#50fa7b'; // Green
+                    statusIndicator.style.boxShadow = '0 0 5px rgba(80, 250, 123, 0.5)';
+                    statusText.textContent = 'Connected';
+                } else {
+                    statusIndicator.style.backgroundColor = '#ff5555'; // Red
+                    statusIndicator.style.boxShadow = '0 0 5px rgba(255, 85, 85, 0.5)';
+                    statusText.textContent = 'Disconnected';
+                }
+            }
+            
+            // Simulate occasional connection drops (just for visual effect)
+            setInterval(() => {
+                if (Math.random() < 0.1) { // 10% chance every 30 seconds
+                    toggleStatus();
+                    
+                    // Auto reconnect after a few seconds
+                    if (!connectionStatus) {
+                        setTimeout(toggleStatus, 3000);
+                    }
+                }
+            }, 30000);
+        } catch (e) {
+            console.error("Error in main initialization:", e);
+            document.body.innerHTML += `<div style="color:red; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); padding:10px;">
+                ERROR: ${e.message}
+            </div>`;
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NEOTERMINAL - Test</title>
+    <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            background-color: #0f111a;
+            display: flex;
+            flex-direction: column;
+        }
+        #terminal-container {
+            flex: 1;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            padding: 5px;
+        }
+        h1 {
+            color: #00ffff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>NEOTERMINAL - Test</h1>
+    <div id="terminal-container"></div>
+
+    <script src="../node_modules/xterm/lib/xterm.js"></script>
+    <script src="../node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+    <script>
+        console.log("Script is running");
+        
+        // Test if Terminal exists
+        if (typeof Terminal !== 'undefined') {
+            console.log("Terminal is defined");
+        } else {
+            console.log("Terminal is NOT defined");
+            document.body.innerHTML += "<div style='color:red'>ERROR: Terminal is not defined. Check console for details.</div>";
+        }
+        
+        // Initialize terminal
+        try {
+            const terminal = new Terminal({
+                cursorBlink: true,
+                theme: {
+                    background: '#0f111a',
+                    foreground: '#c0c5ce'
+                }
+            });
+            
+            // Create FitAddon for responsive terminal
+            if (typeof FitAddon !== 'undefined') {
+                const fitAddon = new FitAddon.FitAddon();
+                terminal.loadAddon(fitAddon);
+                
+                // Open terminal
+                terminal.open(document.getElementById('terminal-container'));
+                fitAddon.fit();
+                
+                // Write a test message
+                terminal.writeln('Terminal initialized successfully!');
+                terminal.writeln('\r\nThis is a test message.');
+                terminal.writeln('\r\nIf you can see this, xterm.js is working correctly.');
+                terminal.write('\r\n> ');
+            } else {
+                console.error("FitAddon is not defined");
+                document.body.innerHTML += "<div style='color:red'>ERROR: FitAddon is not defined. Check console for details.</div>";
+            }
+        } catch (e) {
+            console.error("Error initializing terminal:", e);
+            document.body.innerHTML += "<div style='color:red'>ERROR: " + e.message + "</div>";
+        }
+    </script>
+</body>
+</html> 
