@@ -36,6 +36,7 @@ export interface CommandOptions {
   filesystem: any; // Will be typed properly once FileSystem is implemented
   env: Record<string, string>;
   terminal?: any; // Terminal instance for special commands that need rendering capabilities
+  originalCommand?: string; // The original full command string for special command handlers
 }
 
 // Command execution result

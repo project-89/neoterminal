@@ -1,12 +1,18 @@
 import { SkillProfile } from "../../../types";
-import { AIAnalysisRequest, AIAnalysisResponse } from "../AIService";
+import {
+  AIAnalysisRequest,
+  AIAnalysisResponse,
+  ConversationMessage,
+} from "../AIService";
 import { BaseAIService } from "../BaseAIService";
-import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /**
  * Google Gemini AI service implementation
  */
 export class GeminiAIService extends BaseAIService {
+  private genAI: GoogleGenerativeAI | null = null;
+
   /**
    * Analyze a user command
    */
@@ -26,17 +32,20 @@ Be concise, informative, and maintain the cyberpunk aesthetic in your responses.
 Recent command history: ${request.commandHistory.slice(-5).join(", ")}
 ${this.formatSkillProfile(request.skillProfile)}`;
 
-      // Make API call to Gemini
-      const response = await this.callGeminiAPI(
-        systemPrompt,
-        userPrompt,
-        request.context
-      );
+      // Generate feedback using our generateResponse method
+      const responseText = await this.generateResponse([
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ]);
 
       return {
-        suggestion: response.suggestion,
-        feedback: response.feedback,
-        skillAssessment: response.skillAssessment,
+        suggestion: responseText,
+        feedback: responseText,
+        skillAssessment: {
+          commandProficiency: 50, // Default medium proficiency score
+          recommendedCommands: [],
+          suggestedNextSteps: [],
+        },
       };
     } catch (error) {
       return {
@@ -57,7 +66,7 @@ ${this.formatSkillProfile(request.skillProfile)}`;
     context: Record<string, any>
   ): Promise<string> {
     try {
-      if (!this.isInitialized()) {
+      if (!this.isInitialized() || !this.genAI) {
         throw new Error("Gemini AI service not initialized");
       }
 
@@ -70,12 +79,13 @@ Be concise, informative, and maintain the cyberpunk aesthetic in your responses.
       }.
 Please provide a hint that guides them without revealing the complete solution.`;
 
-      const response = await this.callGeminiAPI(
-        systemPrompt,
-        userPrompt,
-        context
-      );
-      return response.suggestion || "No hint available at this time.";
+      // Use our generateResponse method directly
+      const response = await this.generateResponse([
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ]);
+
+      return response || "No hint available at this time.";
     } catch (error) {
       return `Error generating hint: ${
         error instanceof Error ? error.message : "Unknown error"
@@ -90,7 +100,7 @@ Please provide a hint that guides them without revealing the complete solution.`
     context: Record<string, any>
   ): Promise<string> {
     try {
-      if (!this.isInitialized()) {
+      if (!this.isInitialized() || !this.genAI) {
         throw new Error("Gemini AI service not initialized");
       }
 
@@ -101,12 +111,13 @@ Create atmospheric, immersive text that enhances the hacker simulation experienc
       const userPrompt = `Generate a brief narrative segment based on the user's current context and progress.
 Keep it concise but impactful, focusing on cyberpunk themes of technology, control, and resistance.`;
 
-      const response = await this.callGeminiAPI(
-        systemPrompt,
-        userPrompt,
-        context
-      );
-      return response.suggestion || "Narrative generation unavailable.";
+      // Use our generateResponse method directly
+      const response = await this.generateResponse([
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ]);
+
+      return response || "Narrative generation unavailable.";
     } catch (error) {
       return `Error generating narrative: ${
         error instanceof Error ? error.message : "Unknown error"
@@ -121,7 +132,7 @@ Keep it concise but impactful, focusing on cyberpunk themes of technology, contr
     skillProfile: SkillProfile
   ): Promise<Record<string, number>> {
     try {
-      if (!this.isInitialized()) {
+      if (!this.isInitialized() || !this.genAI) {
         throw new Error("Gemini AI service not initialized");
       }
 
@@ -132,17 +143,14 @@ Focus on identifying strengths, weaknesses, and opportunities for improvement.`;
       const userPrompt = `Please analyze this user's skill profile and provide an assessment of their command proficiency:
 ${this.formatSkillProfile(skillProfile)}`;
 
-      const response = await this.callGeminiAPI(systemPrompt, userPrompt);
+      // Use our generateResponse method directly
+      await this.generateResponse([
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ]);
 
-      // If we have a real assessment from the API, use it
-      if (
-        response.skillAssessment &&
-        response.skillAssessment.commandProficiency
-      ) {
-        return response.skillAssessment.commandProficiency;
-      }
-
-      // Fallback to basic assessment
+      // For now, we'll just return a basic assessment based on the profile data
+      // A more sophisticated implementation could parse the response for insights
       const assessments: Record<string, number> = {};
       skillProfile.commandProficiency.forEach((proficiency, command) => {
         assessments[command] = proficiency.proficiencyScore;
@@ -174,107 +182,171 @@ ${this.formatSkillProfile(skillProfile)}`;
       this.config.model = "gemini-pro";
     }
 
-    if (!this.config.endpoint) {
-      // Set default endpoint if not specified
-      this.config.endpoint =
-        "https://generativelanguage.googleapis.com/v1beta/models";
+    // Initialize the Google generative AI client
+    try {
+      this.genAI = new GoogleGenerativeAI(this.config.apiKey);
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize Google Generative AI client:", error);
+      return false;
     }
-
-    return true;
   }
 
   /**
-   * Call the Gemini API using Axios
+   * Call the Gemini API using the official Google client
    */
   private async callGeminiAPI(
     systemPrompt: string,
     userPrompt: string,
     context?: Record<string, any>
   ): Promise<any> {
-    if (!this.config?.apiKey) {
-      throw new Error("API key not configured for Gemini");
+    if (!this.config?.apiKey || !this.genAI) {
+      throw new Error(
+        "API key not configured for Gemini or client not initialized"
+      );
     }
 
-    const prompt = this.preparePrompt(systemPrompt, userPrompt, context);
-    const baseEndpoint = this.config.endpoint!;
-    const model = this.config.model!;
-    const maxTokens = this.config.maxTokens || 500;
-    const temperature = this.config.temperature || 0.7;
-    const apiKey = this.config.apiKey;
-
-    // Construct the full endpoint URL for the generateContent method
-    const endpoint = `${baseEndpoint}/${model}:generateContent?key=${apiKey}`;
-
     try {
+      const model = this.config.model || "gemini-pro";
+      const genModel = this.genAI.getGenerativeModel({ model });
+
       // Log API call without sensitive information
-      console.log(`[Gemini API] Calling ${model} with ${prompt.length} chars`);
+      console.log(`[Gemini API] Calling ${model} with prompt`);
 
-      // Make API call to Google Gemini
-      // Format according to Gemini API specs
-      const response = await axios.post(
-        endpoint,
-        {
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: systemPrompt }, { text: userPrompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: temperature,
-            maxOutputTokens: maxTokens,
-            topP: 0.8,
-            topK: 40,
-          },
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // Parse response based on Gemini's response format
-      if (
-        response.data &&
-        response.data.candidates &&
-        response.data.candidates[0]
-      ) {
-        const candidate = response.data.candidates[0];
-
-        if (
-          candidate.content &&
-          candidate.content.parts &&
-          candidate.content.parts[0]
-        ) {
-          const text = candidate.content.parts[0].text || "";
-
-          // For simplicity, we'll return a basic structure that our system expects
-          return {
-            suggestion: text,
-            feedback: "",
-            skillAssessment: {
-              commandProficiency: {},
-            },
-          };
-        }
+      // Create prompt parts
+      const parts = [{ text: userPrompt }];
+      if (context) {
+        parts.unshift({ text: `Context: ${JSON.stringify(context)}` });
+      }
+      if (systemPrompt) {
+        parts.unshift({ text: systemPrompt });
       }
 
-      throw new Error("Invalid response from Gemini API");
+      // Generate content
+      const result = await genModel.generateContent(parts);
+      const response = result.response;
+      const text = response.text();
+
+      // For simplicity, we'll return a basic structure that our system expects
+      return {
+        suggestion: text,
+        feedback: text,
+        skillAssessment: {
+          commandProficiency: 50, // Default medium proficiency score
+          recommendedCommands: [],
+          suggestedNextSteps: [],
+        },
+      };
     } catch (error) {
       // Enhanced error handling
-      if (axios.isAxiosError(error)) {
-        const errorResponse = error.response?.data;
-        const errorMessage =
-          errorResponse?.error?.message || "Unknown API error";
-        console.error(
-          `Gemini API error: ${errorMessage}`,
-          error.response?.status
-        );
-        throw new Error(`Gemini API error: ${errorMessage}`);
+      console.error("Error calling Gemini API:", error);
+      throw new Error(
+        `Gemini API error: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Generate a response from conversation history
+   * @param messages An array of conversation messages with roles and content
+   * @returns The generated response text
+   */
+  public async generateResponse(
+    messages: ConversationMessage[]
+  ): Promise<string> {
+    this.ensureInitialized();
+
+    try {
+      if (!this.genAI) {
+        throw new Error("Google Generative AI client not initialized");
       }
 
-      console.error("Error calling Gemini API:", error);
+      const model = this.config?.model || "gemini-pro";
+      const genModel = this.genAI.getGenerativeModel({ model });
+
+      // Extract system prompt if present
+      let systemPrompt = "";
+      let userMessages: ConversationMessage[] = [];
+
+      // Find the first system message and extract it
+      const systemMessageIndex = messages.findIndex(
+        (msg) => msg.role === "system"
+      );
+      if (systemMessageIndex >= 0) {
+        systemPrompt = messages[systemMessageIndex].content;
+        userMessages = messages.filter(
+          (_, index) => index !== systemMessageIndex
+        );
+      } else {
+        userMessages = [...messages];
+      }
+
+      // If we don't have any user messages, create a simple prompt
+      if (userMessages.length === 0) {
+        return await this.generateSimpleResponse(
+          systemPrompt || "Please respond to this message."
+        );
+      }
+
+      // Find the last user message
+      const lastUserMessageIndex = userMessages
+        .map((msg) => msg.role)
+        .lastIndexOf("user");
+      if (lastUserMessageIndex === -1) {
+        // If there's no user message, we need to create one
+        return await this.generateSimpleResponse(
+          "Please respond to this message."
+        );
+      }
+
+      // Prepare a prompt that combines the system prompt and the most recent user message
+      const lastUserMessage = userMessages[lastUserMessageIndex].content;
+      const fullPrompt = systemPrompt
+        ? `${systemPrompt}\n\n${lastUserMessage}`
+        : lastUserMessage;
+
+      // Use the simple content generation approach instead of chat
+      const result = await genModel.generateContent(fullPrompt);
+      return result.response.text();
+    } catch (error) {
+      console.error("[GeminiAIService] Error generating response:", error);
+      throw new Error(
+        `Failed to generate response: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Generate a simple response without using chat history
+   * @param prompt The text prompt
+   * @returns Generated response text
+   */
+  private async generateSimpleResponse(prompt: string): Promise<string> {
+    if (!this.genAI) {
+      throw new Error("Google Generative AI client not initialized");
+    }
+
+    const model = this.config?.model || "gemini-pro";
+    const genModel = this.genAI.getGenerativeModel({
+      model,
+      generationConfig: {
+        temperature: this.config?.temperature || 0.7,
+        maxOutputTokens: this.config?.maxTokens || 1000,
+      },
+    });
+
+    try {
+      const result = await genModel.generateContent(prompt);
+      return result.response.text();
+    } catch (error) {
+      console.error(
+        "[GeminiAIService] Error generating simple response:",
+        error
+      );
       throw error;
     }
   }

@@ -40,8 +40,10 @@ npm install
 # Start NEOTERMINAL with the default local AI provider (no API key required)
 npm start
 
-# Or run with a specific AI provider
-AI_PROVIDER=claude AI_API_KEY=your_api_key npm start
+# Or run with a specific AI provider (examples):
+AI_PROVIDER=claude CLAUDE_API_KEY=your_api_key npm start
+AI_PROVIDER=gemini GEMINI_API_KEY=your_api_key npm start
+AI_PROVIDER=openai OPENAI_API_KEY=your_api_key npm start
 ```
 
 ## //> AI ASSISTANT CONFIGURATION
@@ -58,11 +60,15 @@ The AI service can be configured in three ways, in order of precedence:
    - User's home directory (`~/.neoterminal/ai-config.json`)
 
 2. **Environment Variables**:
-   - `AI_PROVIDER`: Service provider (`claude`, `gemini`, or `local`)
-   - `AI_API_KEY`: Your API key for Claude or Gemini
+   - `AI_PROVIDER`: Service provider (`claude`, `gemini`, `openai`, or `local` - default is `local`)
+   - Provider-specific API keys (in order of preference):
+     - For OpenAI: `OPENAI_API_KEY`
+     - For Claude: `CLAUDE_API_KEY`
+     - For Gemini: `GEMINI_API_KEY`
+   - Generic key: `AI_API_KEY` (fallback for any provider if specific key not found)
    - `AI_MODEL`: Specific model to use (provider-specific)
    - `AI_TEMPERATURE`: Response creativity (0.0-1.0, default 0.7)
-   - `AI_MAX_TOKENS`: Maximum tokens in responses (default 500)
+   - `AI_MAX_TOKENS`: Maximum tokens in responses (default 1000)
 
 3. **Default Configuration**: If no custom config is found, the system uses the local provider which works offline without an API key.
 
@@ -82,6 +88,11 @@ Create an `ai-config.json` file with content like this:
 
 ### AI Provider Options
 
+- **Local**: Offline mode with pre-defined responses (no API key required)
+  - Great for learning without external services
+  - Limited to pre-programmed responses
+  - **Default provider** if none specified
+
 - **Claude**: Anthropic's advanced language model (requires API key)
   - Default model: `claude-3-sonnet-20240229`
   - Sign up: [https://www.anthropic.com/claude](https://www.anthropic.com/claude)
@@ -90,9 +101,9 @@ Create an `ai-config.json` file with content like this:
   - Default model: `gemini-pro`
   - Sign up: [https://ai.google.dev/](https://ai.google.dev/)
 
-- **Local**: Offline mode with pre-defined responses (no API key required)
-  - Great for learning without external services
-  - Limited to pre-programmed responses
+- **OpenAI**: OpenAI's language models (requires API key)
+  - Default model: `gpt-3.5-turbo`
+  - Sign up: [https://platform.openai.com/](https://platform.openai.com/)
 
 ### AI Implementation
 
@@ -186,6 +197,29 @@ NEOTERMINAL is open to contributions! Check out the [CONTRIBUTING.md](docs/CONTR
 
 MIT © GHOST//SIGNAL COLLECTIVE
 
-```
+## Visual Experience
+
+NEOTERMINAL provides a rich visual experience with cyberpunk-themed terminal styling:
+
+- **Dynamic Text Formatting**: Narrative text is styled with context-aware coloring
+- **Command Highlighting**: CLI commands, paths, and system terms are automatically highlighted
+- **Character Dialogue**: Character names and dialogue are distinctly styled
+- **Code Blocks**: Command examples and code snippets use syntax highlighting
+- **ASCII Art**: Decorative elements use theme-appropriate colors
+- **Error Messages**: Errors are clearly indicated with high-visibility styling
+
+The system automatically applies the active terminal theme to all content, creating an immersive cyberpunk experience.
+
+### Themes
+
+NEOTERMINAL includes several built-in themes:
+
+- **Neon Night**: Vibrant cyberpunk palette with bright neon colors on deep blue
+- **Bladerunner**: Moody amber and teal palette inspired by the film
+- **Ghost in the Shell**: Subtle jade and paper tones for a refined look
+- **Synthwave**: Bold retro-futuristic colors with hot pink and cyan
+
+You can customize or switch themes using the `theme` command.
+
 // END OF TRANSMISSION
 // DISCONNECT FROM UPLINK? [Y/N]

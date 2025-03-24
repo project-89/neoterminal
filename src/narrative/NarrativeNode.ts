@@ -16,6 +16,12 @@ export interface NarrativeNode {
   location?: string; // Location ID where this node takes place
   tags?: string[]; // Tags for search and filtering
   requires_command?: string; // Command that must be executed to progress
+
+  // Additional properties from nodes/NarrativeNode.ts for compatibility
+  speakerId?: string; // ID of speaking character
+  onEnterEffects?: NodeEffect[]; // Effects when entering node
+  onExitEffects?: NodeEffect[]; // Effects when leaving node
+
   requirements?: {
     // Requirements for the node to be accessible
     minHackingSkill?: number;
@@ -23,6 +29,9 @@ export interface NarrativeNode {
     requiredFlags?: string[];
     factionStandings?: Record<string, number>;
     completedMissions?: string[];
+    playerLevel?: number; // From nodes/NarrativeNode.ts
+    requiredSkills?: Record<string, number>; // From nodes/NarrativeNode.ts
+    flags?: string[]; // From nodes/NarrativeNode.ts
   };
   effects?: NodeEffect[]; // Effects on player state
   metadata?: {
@@ -31,6 +40,15 @@ export interface NarrativeNode {
     created?: number;
     modified?: number;
     notes?: string;
+
+    // From nodes/NarrativeNode.ts metadata
+    background?: string; // Background image or scene
+    ambientSound?: string; // Ambient sound to play
+    music?: string; // Music track to play
+    theme?: string; // UI theme to use
+    isSpecialNode?: boolean; // Whether this is a special node
+    tags?: string[]; // Tags for the node (duplicate of node.tags for compatibility)
+    [key: string]: any; // Allow any other metadata properties
   };
 }
 
@@ -46,7 +64,17 @@ export interface NodeEffect {
     | "clear_flag"
     | "modify_faction"
     | "set_variable"
-    | "add_event";
+    | "add_event"
+    | "ADD_FLAG"
+    | "REMOVE_FLAG"
+    | "ADD_ITEM"
+    | "REMOVE_ITEM"
+    | "MODIFY_RELATIONSHIP"
+    | "CHANGE_STAT"
+    | "TRIGGER_EVENT"
+    | "UNLOCK_CHAPTER"
+    | "COMPLETE_OBJECTIVE"
+    | "CUSTOM";
   // Properties for different effect types
   stat?: string;
   value?: number;
@@ -56,6 +84,11 @@ export interface NodeEffect {
   key?: string;
   eventType?: string;
   details?: Record<string, any>;
+
+  // From nodes/NarrativeNode.ts NodeEffect
+  target?: string; // Target of the effect
+  message?: string; // Message to display
+  probability?: number; // Probability of occurrence
 }
 
 /**

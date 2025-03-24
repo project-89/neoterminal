@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
-import { AIServiceManager } from "../ai/AIServiceManager";
-import { NarrativeNode } from "./NarrativeNode";
+import { AIServiceManager } from "./ai";
+import { NarrativeNode, NodeEffect } from "./NarrativeNode";
 import { NarrativeGraph } from "./NarrativeGraph";
 import { PlayerState } from "./PlayerState";
 import { StoryEvent } from "./events/StoryEvent";
@@ -8,6 +8,16 @@ import { Character } from "./characters/Character";
 import { NarrativeChapter } from "./chapters/NarrativeChapter";
 import { NarrativeChoice } from "./NarrativeChoice";
 import { CharacterManager } from "./characters/CharacterManager";
+import {
+  adaptNarrativeNode,
+  adaptNodeEffect,
+  safeString,
+  safeNumber,
+  resolveChapter,
+  ensureString,
+  ensureNumber,
+  forceNonNullChapter,
+} from "./utils/TypeAdapters";
 
 /**
  * Core narrative system that manages story progression and generates narrative content
@@ -35,13 +45,13 @@ export class NarrativeSystem extends EventEmitter {
    */
   public async initialize(startNodeId: string): Promise<boolean> {
     try {
-      // Load the starting node
       const startNode = this.narrativeGraph.getNode(startNodeId);
       if (!startNode) {
         throw new Error(`Starting node ${startNodeId} not found`);
       }
 
-      this.currentNode = startNode;
+      // Use the adapter to ensure consistent type
+      this.currentNode = adaptNarrativeNode(startNode);
       this.nodeHistory.push(startNodeId);
 
       // Setup initial player state
@@ -84,25 +94,13 @@ export class NarrativeSystem extends EventEmitter {
     if (!this.currentNode) return;
 
     // Check if we're entering a new chapter
-    if (
-      this.currentNode.chapterId &&
-      (!this.currentChapter ||
-        this.currentNode.chapterId !== this.currentChapter.id)
-    ) {
-      const newChapter = this.narrativeGraph.getChapter(
-        this.currentNode.chapterId
-      );
-      if (newChapter) {
-        this.currentChapter = newChapter;
-        this.emit("chapter-changed", { chapter: newChapter });
-      }
-    }
+    this.checkAndUpdateChapter();
 
     // Generate narrative content
     const content = await this.generateNodeContent(this.currentNode);
 
     // Process node actions/effects
-    this.processNodeEffects(this.currentNode);
+    this.processNodeEffects(this.currentNode.effects);
 
     // Check if there are any characters to introduce
     if (this.currentNode.characters && this.currentNode.characters.length > 0) {
@@ -212,44 +210,99 @@ export class NarrativeSystem extends EventEmitter {
   /**
    * Process the effects/actions of the current node on player state
    */
-  private processNodeEffects(node: NarrativeNode): void {
-    if (!node.effects) return;
+  private processNodeEffects(effects: NodeEffect[] | undefined): void {
+    if (!effects || effects.length === 0) return;
 
-    for (const effect of node.effects) {
-      switch (effect.type) {
+    for (const effect of effects) {
+      const adaptedEffect = adaptNodeEffect(effect);
+
+      switch (adaptedEffect.type) {
         case "modify_stat":
-          this.playerState.modifyStat(effect.stat, effect.value);
+          this.playerState.modifyStat(
+            ensureString(adaptedEffect.stat),
+            ensureNumber(adaptedEffect.value)
+          );
           break;
 
         case "add_item":
-          this.playerState.addInventoryItem(effect.item);
+          this.playerState.addInventoryItem(ensureString(adaptedEffect.item));
           break;
 
         case "remove_item":
-          this.playerState.removeInventoryItem(effect.item);
+          if (adaptedEffect.item) {
+            this.playerState.removeInventoryItem(adaptedEffect.item);
+          }
           break;
 
         case "set_flag":
-          this.playerState.setFlag(effect.flag);
+          if (adaptedEffect.flag) {
+            this.playerState.setFlag(adaptedEffect.flag);
+          }
           break;
 
         case "clear_flag":
-          this.playerState.clearFlag(effect.flag);
+          if (adaptedEffect.flag) {
+            this.playerState.clearFlag(adaptedEffect.flag);
+          }
           break;
 
         case "modify_faction":
-          this.playerState.modifyFactionStanding(effect.faction, effect.value);
+          if (adaptedEffect.faction) {
+            this.playerState.modifyFactionStanding(
+              adaptedEffect.faction,
+              safeNumber(adaptedEffect.value)
+            );
+          }
           break;
 
         case "set_variable":
-          this.playerState.setStoryVariable(effect.key, effect.value);
+          if (adaptedEffect.key) {
+            this.playerState.setStoryVariable(
+              adaptedEffect.key,
+              adaptedEffect.value !== undefined ? adaptedEffect.value : ""
+            );
+          }
+          break;
+
+        // Handle legacy effect types for compatibility
+        case "ADD_FLAG":
+          if (adaptedEffect.flag) {
+            this.playerState.setFlag(adaptedEffect.flag);
+          }
+          break;
+
+        case "REMOVE_FLAG":
+          if (adaptedEffect.flag) {
+            this.playerState.clearFlag(adaptedEffect.flag);
+          }
+          break;
+
+        case "ADD_ITEM":
+          if (adaptedEffect.item) {
+            this.playerState.addInventoryItem(adaptedEffect.item);
+          }
+          break;
+
+        case "REMOVE_ITEM":
+          if (adaptedEffect.item) {
+            this.playerState.removeInventoryItem(adaptedEffect.item);
+          }
+          break;
+
+        case "MODIFY_RELATIONSHIP":
+          if (adaptedEffect.target) {
+            this.playerState.modifyFactionStanding(
+              adaptedEffect.target,
+              safeNumber(adaptedEffect.value)
+            );
+          }
           break;
 
         case "add_event":
           this.logEvent({
-            type: effect.eventType,
+            type: adaptedEffect.eventType || "unknown_event",
             timestamp: Date.now(),
-            details: effect.details || {},
+            details: adaptedEffect.details || {},
           });
           break;
       }
@@ -263,16 +316,32 @@ export class NarrativeSystem extends EventEmitter {
     try {
       const node = this.narrativeGraph.getNode(nodeId);
       if (!node) {
-        throw new Error(`Node ${nodeId} not found`);
+        console.error(`Node ${nodeId} not found`);
+        return false;
       }
 
-      // Check if this node has requirements
-      if (node.requirements && !this.checkNodeRequirements(node)) {
-        this.emit("requirements-not-met", {
-          nodeId,
-          requirements: node.requirements,
-        });
+      // Use adapter to ensure consistent type
+      const adaptedNode = adaptNarrativeNode(node);
+
+      if (
+        adaptedNode.requirements &&
+        !this.checkNodeRequirements(adaptedNode)
+      ) {
+        console.log(`Requirements not met for node ${nodeId}`);
         return false;
+      }
+
+      // Process exit effects from current node if it exists
+      if (this.currentNode?.onExitEffects) {
+        this.processNodeEffects(this.currentNode.effects);
+      }
+
+      // Set the new current node and process its effects
+      this.currentNode = adaptedNode;
+      this.nodeHistory.push(nodeId);
+
+      if (adaptedNode.onEnterEffects) {
+        this.processNodeEffects(adaptedNode.effects);
       }
 
       // If we're navigating to a new node, log it as an event
@@ -287,8 +356,8 @@ export class NarrativeSystem extends EventEmitter {
         });
       }
 
-      this.currentNode = node;
-      this.nodeHistory.push(nodeId);
+      // Use the dedicated method to check for chapter changes
+      this.checkAndUpdateChapter();
 
       // Process the new current node
       await this.processCurrentNode();
@@ -301,7 +370,7 @@ export class NarrativeSystem extends EventEmitter {
   }
 
   /**
-   * Check if player meets the requirements for a node
+   * Check if the player meets the requirements for a node
    */
   private checkNodeRequirements(node: NarrativeNode): boolean {
     if (!node.requirements) return true;
@@ -575,10 +644,19 @@ export class NarrativeSystem extends EventEmitter {
   }
 
   /**
-   * Get info about current chapter
+   * Get the current active chapter
+   * @returns The current chapter or null if none is active
    */
   public getCurrentChapter(): NarrativeChapter | null {
-    return this.currentChapter;
+    if (!this.currentNode || !this.currentNode.chapterId) {
+      return null;
+    }
+
+    const chapter = this.narrativeGraph.getChapter(this.currentNode.chapterId);
+    // Handle undefined properly by returning null instead
+    return chapter
+      ? (resolveChapter(chapter as any) as NarrativeChapter)
+      : null;
   }
 
   /**
@@ -586,5 +664,32 @@ export class NarrativeSystem extends EventEmitter {
    */
   public getCharacter(characterId: string): Character | null {
     return this.characterManager.getCharacter(characterId);
+  }
+
+  // Safe helper for effect processing
+  private safeGetStringOrUndefined(
+    value: string | undefined
+  ): string | undefined {
+    return value;
+  }
+
+  /**
+   * Check if we're entering a new chapter
+   */
+  private checkAndUpdateChapter(): void {
+    if (
+      this.currentNode?.chapterId &&
+      (!this.currentChapter ||
+        this.currentNode.chapterId !== this.currentChapter?.id)
+    ) {
+      const newChapter = this.narrativeGraph.getChapter(
+        this.currentNode.chapterId
+      );
+      if (newChapter) {
+        // Use forceNonNullChapter to handle the type conversion
+        this.currentChapter = forceNonNullChapter(newChapter);
+        this.emit("chapter-changed", { chapter: newChapter });
+      }
+    }
   }
 }

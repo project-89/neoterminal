@@ -13,11 +13,13 @@ import { AIServiceManager } from "./AIServiceManager";
 import { ClaudeAIService } from "./providers/ClaudeAIService";
 import { GeminiAIService } from "./providers/GeminiAIService";
 import { LocalAIService } from "./providers/LocalAIService";
+import { OpenAIService } from "./services/OpenAIService";
 
 // Register providers with the service manager
 const serviceManager = AIServiceManager.getInstance();
 serviceManager.registerProvider("claude", ClaudeAIService);
 serviceManager.registerProvider("gemini", GeminiAIService);
 serviceManager.registerProvider("local", LocalAIService);
+serviceManager.registerProvider("openai", OpenAIService);
 
 export { serviceManager as AIServiceManager };

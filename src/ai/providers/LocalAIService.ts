@@ -1,5 +1,9 @@
 import { SkillProfile } from "../../../types";
-import { AIAnalysisRequest, AIAnalysisResponse } from "../AIService";
+import {
+  AIAnalysisRequest,
+  AIAnalysisResponse,
+  ConversationMessage,
+} from "../AIService";
 import { BaseAIService } from "../BaseAIService";
 
 /**
@@ -324,5 +328,77 @@ export class LocalAIService extends BaseAIService {
 
     // General recommendations
     return ["grep", "find", "chmod"];
+  }
+
+  /**
+   * Generate a response from conversation history
+   * @param messages An array of conversation messages with roles and content
+   * @returns The generated response text
+   */
+  public async generateResponse(
+    messages: ConversationMessage[]
+  ): Promise<string> {
+    this.ensureInitialized();
+
+    try {
+      // For LocalAI, just use a local endpoint if provided, or fall back to dummy responses
+      if (this.config?.endpoint) {
+        // If an endpoint is provided, we'll use it like OpenAI
+        const endpoint = this.config.endpoint;
+        const model = this.config.model || "local-model";
+
+        const requestBody = {
+          model: model,
+          messages: messages,
+          temperature: this.config.temperature || 0.7,
+          max_tokens: this.config.maxTokens || 1000,
+        };
+
+        // Make the API request to local endpoint
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Local API request failed with status ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+      } else {
+        // Fallback to rule-based responses when no API is available
+        // Extract the last user message
+        const lastUserMessage =
+          messages
+            .slice()
+            .reverse()
+            .find((msg) => msg.role === "user")?.content || "";
+
+        // Simple keyword-based responses
+        if (
+          lastUserMessage.includes("hello") ||
+          lastUserMessage.includes("hi")
+        ) {
+          return "Hello! I'm your local AI assistant. How can I help you today?";
+        } else if (lastUserMessage.includes("help")) {
+          return "I'm a simple rule-based assistant when running in local mode. I can provide basic responses but my capabilities are limited without an external API.";
+        } else if (lastUserMessage.toLowerCase().includes("ls")) {
+          return "The `ls` command lists directory contents. In a real terminal, you would see a list of files and folders.";
+        } else if (lastUserMessage.toLowerCase().includes("cd")) {
+          return "The `cd` command changes the current directory. You can use it to navigate through the file system.";
+        } else {
+          return "I'm operating in local mode with limited capabilities. Please connect to an AI API for more advanced functionality.";
+        }
+      }
+    } catch (error) {
+      console.error("[LocalAIService] Error generating response:", error);
+      return "I'm running in local mode and encountered an error. My capabilities are limited without an external API.";
+    }
   }
 }

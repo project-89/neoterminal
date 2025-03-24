@@ -22,9 +22,11 @@
   "author": "GHOST//SIGNAL COLLECTIVE",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.24.0",
     "axios": "^1.6.8",
     "chalk": "^4.1.2",
     "commander": "^9.0.0",
+    "dotenv": "^16.4.7",
     "eventemitter3": "^4.0.7",
     "figlet": "^1.5.2",
     "figures": "^4.0.0",
@@ -55,7 +57,9 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/*.test.ts"],
+    "testMatch": [
+      "**/*.test.ts"
+    ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },

@@ -14,6 +14,14 @@ export interface AIServiceConfig {
 }
 
 /**
+ * Message format for conversation history
+ */
+export interface ConversationMessage {
+  role: string; // "system", "user", "assistant"
+  content: string;
+}
+
+/**
  * Request for AI analysis
  */
 export interface AIAnalysisRequest {
@@ -50,6 +58,13 @@ export interface AIService {
    * Check if the service is properly initialized
    */
   isInitialized(): boolean;
+
+  /**
+   * Generate a response from conversation history
+   * @param messages Array of conversation messages with roles and content
+   * @returns Generated response text
+   */
+  generateResponse(messages: ConversationMessage[]): Promise<string>;
 
   /**
    * Analyze user command and provide feedback/suggestions

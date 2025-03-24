@@ -7,6 +7,8 @@ import { AnimationOptions, AnimationType } from "./animations/types";
 import defaultAnimationSystem from "./animations";
 import { TerminalRendering } from "./interfaces/TerminalRendering";
 import themeManager from "./themes/ThemeManager";
+import { NarrativeManager } from "../narrative/NarrativeManager";
+import { TerminalFormatter } from "./TerminalFormatter";
 
 /**
  * Terminal emulator for command-line interface
@@ -18,6 +20,8 @@ export class TerminalEmulator
   implements TerminalRendering
 {
   private commandProcessor: CommandProcessor;
+  private narrativeManager?: NarrativeManager;
+  private eventEmitter: EventEmitter = new EventEmitter();
   private inputBuffer: string = "";
   private commandHistory: string[] = [];
   private historyPosition: number = -1;
@@ -30,9 +34,39 @@ export class TerminalEmulator
   private cursorCol: number = 0;
   private elements: Set<HTMLElement> = new Set();
 
-  constructor(commandProcessor: CommandProcessor) {
+  constructor(
+    commandProcessor: CommandProcessor,
+    narrativeManager?: NarrativeManager
+  ) {
     super();
     this.commandProcessor = commandProcessor;
+    this.narrativeManager = narrativeManager;
+
+    // Set up a listener for narrative responses if we have a narrative manager
+    if (this.narrativeManager) {
+      this.narrativeManager.on("narrativeResponse", (response: string) => {
+        // Add some delay to make it feel more natural
+        setTimeout(() => {
+          this.write("\n");
+
+          // Use the formatter for narrative responses
+          if (this.theme) {
+            // Format the narrative text with cyberpunk styling
+            const formattedResponse = TerminalFormatter.formatNarrativeText(
+              response,
+              this.theme
+            );
+            console.log(formattedResponse);
+          } else {
+            // Fallback if no theme is available
+            this.write(response);
+          }
+
+          this.write("\n\n");
+          this.displayPrompt();
+        }, 500);
+      });
+    }
 
     // Check if we're in a browser environment where animations can be used
     this.animationEnabled =
@@ -65,20 +99,30 @@ export class TerminalEmulator
    * Display welcome screen with ASCII art
    */
   private displayWelcomeScreen(): void {
-    const logo = figlet.textSync("NEOTERMINAL", {
-      font: "ANSI Shadow",
-      horizontalLayout: "fitted",
-      verticalLayout: "default",
-    });
+    try {
+      if (this.theme) {
+        const welcomeText = figlet.textSync("NEOTERMINAL", {
+          font: "ANSI Shadow",
+        });
+        const boxedWelcome = TerminalFormatter.createAsciiBox(
+          welcomeText,
+          this.theme
+        );
+        console.log(boxedWelcome);
 
-    console.log(chalk.cyan(logo));
-    console.log(
-      chalk.yellow(
-        ">> SYSTEM v0.1.0 - INITIALIZING...\n" +
-          ">> ESTABLISHING SECURE CONNECTION...\n" +
-          ">> WELCOME, OPERATIVE.\n"
-      )
-    );
+        const subtitle = "A Cyberpunk CLI Learning Experience";
+        const formattedSubtitle = chalk
+          .hex(this.theme.brightMagenta)
+          .bold(subtitle);
+        console.log("\n" + " ".repeat(30) + formattedSubtitle + "\n");
+      } else {
+        console.log(
+          chalk.cyan(figlet.textSync("NEOTERMINAL", { font: "ANSI Shadow" }))
+        );
+      }
+    } catch (error) {
+      console.log("NEOTERMINAL");
+    }
   }
 
   /**
@@ -160,10 +204,26 @@ export class TerminalEmulator
         if (result.output) {
           // Apply theme colors to output if theme is available
           if (this.theme) {
-            const style: TerminalStyle = {
-              foreground: this.theme.foreground,
-            };
-            this.write(result.output, style);
+            // Check if output appears to be narrative content
+            if (
+              result.output.includes("GHOST//SIGNAL") ||
+              result.output.includes("CHOICES:") ||
+              result.output.match(/\[[A-Za-z0-9_]+\]:/)
+            ) {
+              // Format as narrative content with cyberpunk styling
+              const formattedOutput = TerminalFormatter.formatNarrativeText(
+                result.output,
+                this.theme
+              );
+              console.log(formattedOutput);
+            } else {
+              // Format as regular command output
+              const formattedOutput = TerminalFormatter.formatCommandOutput(
+                result.output,
+                this.theme
+              );
+              console.log(formattedOutput);
+            }
           } else {
             console.log(result.output);
           }
@@ -257,11 +317,27 @@ export class TerminalEmulator
   }
 
   /**
-   * Write an error message
+   * Write error message to the terminal
    */
   public writeError(message: string): void {
-    const errorColor = this.theme ? this.theme.red : "red";
-    console.log(chalk.hex(errorColor)(`ERROR: ${message}`));
+    if (!message) return;
+
+    if (this.theme) {
+      // Create an error box with a distinct style for visibility
+      const errorPrefix = chalk.hex(this.theme.brightRed).bold("ERROR: ");
+      const errorMessage = chalk.hex(this.theme.red)(message);
+
+      // Format error in a box for better visibility
+      console.log(
+        "\n" +
+          chalk.hex(this.theme.red)("▓▒░ ") +
+          errorPrefix +
+          errorMessage +
+          chalk.hex(this.theme.red)(" ░▒▓")
+      );
+    } else {
+      console.error(chalk.red("ERROR:"), message);
+    }
   }
 
   /**

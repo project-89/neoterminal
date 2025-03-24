@@ -1,6 +1,7 @@
-import { NarrativeNode } from "./nodes/NarrativeNode";
+import { NarrativeNode } from "./NarrativeNode";
 import { NarrativeChapter } from "./chapters/NarrativeChapter";
 import { EventTrigger } from "./events/StoryEvent";
+import { adaptNarrativeNode, adaptNarrativeChoice } from "./utils/TypeAdapters";
 
 // Helper type guard to check if a node has tags property
 function hasTagsProperty(node: any): node is { tags: string[] } {
@@ -57,20 +58,22 @@ export class NarrativeGraph {
   /**
    * Add a narrative node
    */
-  public addNode(node: NarrativeNode): void {
-    this.nodes.set(node.id, node);
+  public addNode(node: any): void {
+    // Adapt the node to ensure correct type
+    const adaptedNode = adaptNarrativeNode(node);
+    this.nodes.set(adaptedNode.id, adaptedNode);
 
     // Index node by tags - handle different node structures
-    if (hasMetadataTags(node)) {
-      for (const tag of node.metadata.tags) {
+    if (hasMetadataTags(adaptedNode)) {
+      for (const tag of adaptedNode.metadata.tags) {
         const nodesWithTag = this.nodesByTag.get(tag) || [];
-        nodesWithTag.push(node.id);
+        nodesWithTag.push(adaptedNode.id);
         this.nodesByTag.set(tag, nodesWithTag);
       }
-    } else if (hasTagsProperty(node)) {
-      for (const tag of node.tags) {
+    } else if (hasTagsProperty(adaptedNode)) {
+      for (const tag of adaptedNode.tags) {
         const nodesWithTag = this.nodesByTag.get(tag) || [];
-        nodesWithTag.push(node.id);
+        nodesWithTag.push(adaptedNode.id);
         this.nodesByTag.set(tag, nodesWithTag);
       }
     }
@@ -171,20 +174,10 @@ export class NarrativeGraph {
     // Check choice connections
     if (node.choices) {
       for (const choice of node.choices) {
-        // Handle both versions of the choice property (targetNode and nextNodeId)
-        let targetId: string | undefined;
-
-        if ("targetNode" in choice && typeof choice.targetNode === "string") {
-          targetId = choice.targetNode;
-        } else if (
-          "nextNodeId" in choice &&
-          typeof choice.nextNodeId === "string"
-        ) {
-          targetId = choice.nextNodeId;
-        }
-
-        if (targetId) {
-          const targetNode = this.getNode(targetId);
+        // Adapt the choice for consistency
+        const adaptedChoice = adaptNarrativeChoice(choice);
+        if (adaptedChoice.targetNode) {
+          const targetNode = this.getNode(adaptedChoice.targetNode);
           if (targetNode) {
             connectedNodes.push(targetNode);
           }

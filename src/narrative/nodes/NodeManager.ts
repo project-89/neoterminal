@@ -1,6 +1,13 @@
-import { NarrativeNode, NarrativeChoice, NodeEffect } from "./NarrativeNode";
+import {
+  NarrativeNode as InternalNarrativeNode,
+  NarrativeChoice as InternalNarrativeChoice,
+  NodeEffect as InternalNodeEffect,
+} from "./NarrativeNode";
 import { CharacterManager } from "../characters/CharacterManager";
 import { ChapterManager } from "../chapters/ChapterManager";
+
+// For type compatibility, also import from main namespace
+import { NarrativeNode as ExternalNarrativeNode } from "../NarrativeNode";
 
 /**
  * Game state context for evaluating node requirements and effects
@@ -15,14 +22,46 @@ interface GameStateContext {
 }
 
 /**
+ * Type to represent any valid narrative node
+ */
+type AnyNarrativeNode = InternalNarrativeNode | ExternalNarrativeNode;
+
+/**
+ * Helper function to adapt external node format to internal format
+ */
+function adaptNodeFormat(node: AnyNarrativeNode): InternalNarrativeNode {
+  // Cast to internal format with necessary properties
+  return {
+    id: node.id,
+    title: node.title || "Untitled Node",
+    content: node.content || "",
+    chapterId: node.chapterId || "",
+    choices: node.choices?.map(adaptChoiceFormat) || [],
+    isVisible: true,
+  } as InternalNarrativeNode;
+}
+
+/**
+ * Helper function to adapt external choice format to internal format
+ */
+function adaptChoiceFormat(choice: any): InternalNarrativeChoice {
+  return {
+    id: choice.id,
+    text: choice.text,
+    nextNodeId: choice.targetNode || choice.nextNodeId || "",
+    isVisible: choice.isVisible !== undefined ? choice.isVisible : true,
+  } as InternalNarrativeChoice;
+}
+
+/**
  * Manages narrative nodes, choices, and transitions
  */
 export class NodeManager {
   /** Map of nodes by ID */
-  private nodes: Map<string, NarrativeNode>;
+  private nodes: Map<string, InternalNarrativeNode>;
 
   /** Currently active node */
-  private currentNode: NarrativeNode | null;
+  private currentNode: InternalNarrativeNode | null;
 
   /** Reference to character manager */
   private characterManager: CharacterManager;
@@ -45,7 +84,7 @@ export class NodeManager {
     characterManager: CharacterManager,
     chapterManager: ChapterManager
   ) {
-    this.nodes = new Map<string, NarrativeNode>();
+    this.nodes = new Map<string, InternalNarrativeNode>();
     this.currentNode = null;
     this.characterManager = characterManager;
     this.chapterManager = chapterManager;
@@ -64,9 +103,10 @@ export class NodeManager {
    * Loads nodes into the manager
    * @param nodesToLoad - Array of nodes to load
    */
-  public loadNodes(nodesToLoad: NarrativeNode[]): void {
+  public loadNodes(nodesToLoad: AnyNarrativeNode[]): void {
     nodesToLoad.forEach((node) => {
-      this.nodes.set(node.id, node);
+      const adaptedNode = adaptNodeFormat(node);
+      this.nodes.set(adaptedNode.id, adaptedNode);
     });
   }
 
@@ -74,7 +114,7 @@ export class NodeManager {
    * Adds a single node to the manager
    * @param node - Node to add
    */
-  public addNode(node: NarrativeNode): void {
+  public addNode(node: InternalNarrativeNode): void {
     this.nodes.set(node.id, node);
   }
 
@@ -83,7 +123,7 @@ export class NodeManager {
    * @param nodeId - ID of node to retrieve
    * @returns The node or undefined if not found
    */
-  public getNode(nodeId: string): NarrativeNode | undefined {
+  public getNode(nodeId: string): InternalNarrativeNode | undefined {
     return this.nodes.get(nodeId);
   }
 
@@ -92,7 +132,7 @@ export class NodeManager {
    * @param chapterId - ID of chapter to get nodes for
    * @returns Array of nodes for the chapter
    */
-  public getNodesForChapter(chapterId: string): NarrativeNode[] {
+  public getNodesForChapter(chapterId: string): InternalNarrativeNode[] {
     return Array.from(this.nodes.values()).filter(
       (node) => node.chapterId === chapterId
     );
@@ -134,7 +174,7 @@ export class NodeManager {
    * Gets the current active node
    * @returns The current node or null if none is active
    */
-  public getCurrentNode(): NarrativeNode | null {
+  public getCurrentNode(): InternalNarrativeNode | null {
     return this.currentNode;
   }
 
@@ -223,7 +263,7 @@ export class NodeManager {
    */
   public getAvailableChoices(
     includeInvisible: boolean = false
-  ): NarrativeChoice[] {
+  ): InternalNarrativeChoice[] {
     if (!this.currentNode || !this.currentNode.choices) {
       return [];
     }
@@ -296,7 +336,7 @@ export class NodeManager {
    * Process node effects
    * @param effects - Array of effects to process
    */
-  private processNodeEffects(effects: NodeEffect[]): void {
+  private processNodeEffects(effects: InternalNodeEffect[]): void {
     for (const effect of effects) {
       // Check probability
       if (effect.probability !== undefined) {

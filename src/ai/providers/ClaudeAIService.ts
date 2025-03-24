@@ -1,5 +1,9 @@
 import { SkillProfile } from "../../../types";
-import { AIAnalysisRequest, AIAnalysisResponse } from "../AIService";
+import {
+  AIAnalysisRequest,
+  AIAnalysisResponse,
+  ConversationMessage,
+} from "../AIService";
 import { BaseAIService } from "../BaseAIService";
 import axios from "axios";
 
@@ -258,6 +262,55 @@ ${this.formatSkillProfile(skillProfile)}`;
 
       console.error("Error calling Claude API:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Generate a response from conversation history
+   * @param messages An array of conversation messages with roles and content
+   * @returns The generated response text
+   */
+  public async generateResponse(
+    messages: ConversationMessage[]
+  ): Promise<string> {
+    this.ensureInitialized();
+
+    try {
+      // Construct the API request for Claude
+      const endpoint =
+        this.config?.endpoint || "https://api.anthropic.com/v1/messages";
+      const model = this.config?.model || "claude-3-sonnet-20240229";
+
+      // Claude API expects a specific format
+      const requestBody = {
+        model: model,
+        messages: messages,
+        max_tokens: this.config?.maxTokens || 1000,
+        temperature: this.config?.temperature || 0.7,
+      };
+
+      // Make the API request
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": this.config?.apiKey || "",
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[ClaudeAIService] API error:", errorData);
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.content[0].text;
+    } catch (error) {
+      console.error("[ClaudeAIService] Error generating response:", error);
+      return "I'm sorry, I encountered an error processing your request.";
     }
   }
 }

@@ -4,6 +4,7 @@ import {
   AIServiceConfig,
   AIAnalysisRequest,
   AIAnalysisResponse,
+  ConversationMessage,
 } from "./AIService";
 
 /**
@@ -29,6 +30,14 @@ export abstract class BaseAIService implements AIService {
   public isInitialized(): boolean {
     return this.initialized;
   }
+
+  /**
+   * Generate a response from conversation history
+   * This must be implemented by subclasses
+   */
+  public abstract generateResponse(
+    messages: ConversationMessage[]
+  ): Promise<string>;
 
   /**
    * Analyze a user command and provide feedback
@@ -99,5 +108,15 @@ export abstract class BaseAIService implements AIService {
       .join(", ");
 
     return `User Skill Level: ${profile.overallLevel}\nCommand Proficiency: ${commandProficiency}`;
+  }
+
+  /**
+   * Ensure that the service is initialized before use
+   * @throws Error if not initialized
+   */
+  protected ensureInitialized(): void {
+    if (!this.initialized) {
+      throw new Error("AI service not initialized");
+    }
   }
 }

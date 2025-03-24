@@ -25,6 +25,13 @@ export class AIServiceManager {
   }
 
   /**
+   * Get the current AI service (static method for easy access)
+   */
+  public static getService(): AIService | null {
+    return AIServiceManager.getInstance().currentService;
+  }
+
+  /**
    * Register an AI service provider
    */
   public registerProvider(

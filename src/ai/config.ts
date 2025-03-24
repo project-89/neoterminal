@@ -95,39 +95,81 @@ export function loadConfigFromFile(filePath: string): AIServiceConfig {
 }
 
 /**
- * Try to load config from standard locations,
- * falling back to environment variables if no file is found
+ * Load AI configuration from environment variables or use defaults
  */
-export function loadConfig(): AIServiceConfig {
-  // Possible config file locations in order of precedence
-  const configPaths = [
-    // Environment variable specified path
-    process.env.AI_CONFIG_PATH,
-    // Current directory
-    "./ai-config.json",
-    // User home directory
-    path.join(
-      process.env.HOME || process.env.USERPROFILE || "",
-      ".neoterminal",
-      "ai-config.json"
-    ),
-  ].filter(Boolean) as string[];
+export async function loadConfig(): Promise<AIServiceConfig> {
+  const provider = process.env.AI_PROVIDER || "local";
 
-  // Try each path
-  for (const configPath of configPaths) {
-    try {
-      if (fs.existsSync(configPath)) {
-        console.log(`Loading AI config from ${configPath}`);
-        return loadConfigFromFile(configPath);
-      }
-    } catch (error) {
-      // Continue to next path
-    }
+  // Determine the API key based on the provider
+  let apiKey = "";
+  if (provider === "openai") {
+    apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY || "";
+  } else if (provider === "claude") {
+    apiKey = process.env.CLAUDE_API_KEY || process.env.AI_API_KEY || "";
+  } else if (provider === "gemini") {
+    apiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "";
+  } else {
+    apiKey = process.env.AI_API_KEY || "";
   }
 
-  // Fall back to environment variables
-  console.log(
-    "No AI config file found, using environment variables or defaults"
-  );
-  return getAIServiceConfig();
+  return {
+    provider,
+    apiKey,
+    model: process.env.AI_MODEL || getDefaultModelForProvider(provider),
+    temperature: parseFloat(process.env.AI_TEMPERATURE || "0.7"),
+    maxTokens: parseInt(process.env.AI_MAX_TOKENS || "1000", 10),
+    endpoint:
+      process.env.AI_ENDPOINT || getDefaultEndpointForProvider(provider),
+  };
+}
+
+/**
+ * Get the default model for a provider
+ */
+function getDefaultModelForProvider(provider: string): string {
+  switch (provider) {
+    case "openai":
+      return "gpt-3.5-turbo";
+    case "claude":
+      return "claude-3-sonnet-20240229";
+    case "gemini":
+      return "gemini-pro";
+    default:
+      return "";
+  }
+}
+
+/**
+ * Get the default endpoint for a provider
+ */
+function getDefaultEndpointForProvider(provider: string): string | undefined {
+  switch (provider) {
+    case "claude":
+      return "https://api.anthropic.com/v1/messages";
+    case "gemini":
+      return "https://generativelanguage.googleapis.com/v1beta/models";
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Check if AI is properly configured
+ */
+export function isAIConfigured(): boolean {
+  const provider = process.env.AI_PROVIDER || "local";
+
+  // Check configuration based on provider
+  switch (provider) {
+    case "openai":
+      return !!(process.env.OPENAI_API_KEY || process.env.AI_API_KEY);
+    case "claude":
+      return !!(process.env.CLAUDE_API_KEY || process.env.AI_API_KEY);
+    case "gemini":
+      return !!(process.env.GEMINI_API_KEY || process.env.AI_API_KEY);
+    case "local":
+      return true; // Local provider doesn't require credentials
+    default:
+      return false;
+  }
 }
